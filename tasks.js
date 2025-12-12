@@ -3007,6 +3007,11 @@ async function executeTaskSave(mode = 'single') {
             if (currentFilter && updatedLocalTask) {
                 if (taskMatchesFilter(updatedLocalTask, currentFilter)) {
                     replaceTaskCardInDOM(updatedLocalTask);
+                    // 🔥 ДОБАВИТЬ ЭТОТ БЛОК КОДА 🔥
+                    // Если мы в списке выполненных, обновляем шапку дня
+                    if (currentFilter === 'completed-7days') {
+                      updateDayHeaderSummary(updatedLocalTask.id);
+                  }
                 } else {
                     removeTaskElementFromDOM(updatedLocalTask.id);
                 }
@@ -3018,38 +3023,65 @@ async function executeTaskSave(mode = 'single') {
       }
       
       // --- ВАРИАНТ Б: Обновляем ВСЮ СЕРИЮ (ИСПРАВЛЕНО) ---
+      // --- ВАРИАНТ Б: Обновляем ВСЮ СЕРИЮ (С УЧЕТОМ СТАТУСА) ---
+      // --- ВАРИАНТ Б: Обновляем ВСЮ СЕРИЮ (С УЧЕТОМ СТАТУСА) ---
       else if (mode === 'series') {
         const currentTask = tasksDB.find(t => t.id === editingTaskId);
         if (!currentTask || !currentTask.groupId) throw new Error("Group ID not found");
 
-        // 1. Обновляем основные поля для всей группы
-        const seriesPayload = {
+        // 1. Разделяем данные на "Общие" и "Только для активных"
+        
+        // А. Поля, которые меняются у ВСЕХ (Активные + Выполненные)
+        const commonPayload = {
           title: taskPayload.title,
-          duration: taskPayload.duration,
-          priority: taskPayload.priority,
-          priority_level: taskPayload.priority_level,
           category_id: taskPayload.category_id
         };
 
-        const { error: updateError } = await supabase
+        // Б. Поля, которые меняются ТОЛЬКО у АКТИВНЫХ (Приоритет, Длительность)
+        const activeOnlyPayload = {
+          duration: taskPayload.duration,
+          priority: taskPayload.priority,
+          priority_level: taskPayload.priority_level
+        };
+
+        // 2. Выполняем запросы к БД
+        
+        // Шаг 1: Обновляем общие поля для всей группы
+        const { error: commonError } = await supabase
           .from('tasks')
-          .update(seriesPayload)
+          .update(commonPayload)
           .eq('group_id', currentTask.groupId);
 
-        if (updateError) throw updateError;
+        if (commonError) throw commonError;
 
-        // 2. Обновляем подзадачи ТЕКУЩЕЙ задачи
+        // Шаг 2: Обновляем специфичные поля ТОЛЬКО для активных задач (completed = false)
+        const { error: activeError } = await supabase
+          .from('tasks')
+          .update(activeOnlyPayload)
+          .eq('group_id', currentTask.groupId)
+          .eq('completed', false);
+
+        if (activeError) throw activeError;
+
+        // 3. Обновляем подзадачи ТЕКУЩЕЙ задачи
         await updateSubtasksForTask(editingTaskId, validSubtasks);
 
-        // 3. УМНАЯ СИНХРОНИЗАЦИЯ ДЛЯ ОСТАЛЬНЫХ ЗАДАЧ СЕРИИ
+        // 4. УМНАЯ СИНХРОНИЗАЦИЯ ПОДЗАДАЧ ДЛЯ ОСТАЛЬНЫХ
+        // Получаем ID и статус задач группы
         const { data: groupTasks, error: groupFetchError } = await supabase
-           .from('tasks').select('id').eq('group_id', currentTask.groupId);
+           .from('tasks')
+           .select('id, completed') 
+           .eq('group_id', currentTask.groupId);
+           
         if(groupFetchError) throw groupFetchError;
 
-        const otherTaskIds = groupTasks.map(t => t.id).filter(id => id !== editingTaskId);
+        // Фильтруем: исключаем текущую задачу И исключаем выполненные задачи
+        const otherTaskIds = groupTasks
+            .filter(t => t.id !== editingTaskId && t.completed === false)
+            .map(t => t.id);
 
         if (otherTaskIds.length > 0) {
-            // А. Получаем ВСЕ существующие подзадачи
+            // А. Получаем подзадачи только для активных задач
             const { data: existingGroupSubtasks, error: subFetchError } = await supabase
                 .from('subtasks')
                 .select('*')
@@ -3058,30 +3090,25 @@ async function executeTaskSave(mode = 'single') {
 
             if (subFetchError) throw subFetchError;
 
-            // Б. Разделяем операции на три массива, чтобы избежать ошибки 400
-            const toUpdate = []; // Объекты с ID
-            const toInsert = []; // Объекты БЕЗ ID
-            const idsToDelete = []; // ID для удаления
+            // Б. Разделяем операции
+            const toUpdate = [];
+            const toInsert = [];
+            const idsToDelete = [];
 
-            // В. Проходим по каждой задаче серии
             otherTaskIds.forEach(targetId => {
                 const currentTargetSubtasks = existingGroupSubtasks.filter(s => s.task_id === targetId);
                 
-                // Синхронизируем по индексу
                 validSubtasks.forEach((template, index) => {
                     const existing = currentTargetSubtasks[index];
-
                     if (existing) {
-                        // UPDATE: Есть совпадение по позиции -> обновляем название, сохраняем ID и статус
                         toUpdate.push({
                             id: existing.id,
                             task_id: targetId,
                             title: template.title,
-                            completed: existing.completed, // Сохраняем прогресс!
+                            completed: existing.completed, 
                             position: index
                         });
                     } else {
-                        // INSERT: Новая подзадача -> вставляем новую
                         toInsert.push({
                             task_id: targetId,
                             title: template.title,
@@ -3091,7 +3118,6 @@ async function executeTaskSave(mode = 'single') {
                     }
                 });
 
-                // DELETE: Если у задачи больше подзадач, чем в шаблоне -> удаляем лишние
                 if (currentTargetSubtasks.length > validSubtasks.length) {
                     for (let i = validSubtasks.length; i < currentTargetSubtasks.length; i++) {
                         idsToDelete.push(currentTargetSubtasks[i].id);
@@ -3099,26 +3125,13 @@ async function executeTaskSave(mode = 'single') {
                 }
             });
 
-            // Г. Выполняем запросы ПО ОЧЕРЕДИ
-            
-            // 1. Удаление
-            if (idsToDelete.length > 0) {
-                await supabase.from('subtasks').delete().in('id', idsToDelete);
-            }
-            
-            // 2. Обновление (Upsert здесь работает, так как у всех есть ID)
-            if (toUpdate.length > 0) {
-                await supabase.from('subtasks').upsert(toUpdate);
-            }
-
-            // 3. Вставка (обычный Insert, так как ID нет)
-            if (toInsert.length > 0) {
-                await supabase.from('subtasks').insert(toInsert);
-            }
+            // В. Выполняем запросы
+            if (idsToDelete.length > 0) await supabase.from('subtasks').delete().in('id', idsToDelete);
+            if (toUpdate.length > 0) await supabase.from('subtasks').upsert(toUpdate);
+            if (toInsert.length > 0) await supabase.from('subtasks').insert(toInsert);
         }
 
-        // 4. Обновление локального кэша (грубая перезагрузка подзадач для надежности)
-        // Запрашиваем актуальное состояние всех подзадач группы
+        // 5. Обновление локального кэша (UI)
         const { data: allFinalSubtasks } = await supabase
             .from('subtasks')
             .select('*')
@@ -3127,29 +3140,37 @@ async function executeTaskSave(mode = 'single') {
 
         tasksDB.forEach(t => {
           if (t.groupId === currentTask.groupId) {
-            t.title = seriesPayload.title;
-            t.duration_min = seriesPayload.duration;
-            t.priority = seriesPayload.priority;
-            t.category = String(seriesPayload.category_id || getDefaultCategoryId());
+            // Общие поля меняем у всех
+            t.title = commonPayload.title;
+            t.category = String(commonPayload.category_id || getDefaultCategoryId());
             
-            const mySubtasks = allFinalSubtasks ? allFinalSubtasks.filter(st => st.task_id === t.id) : [];
-            
-            t.subtasks = mySubtasks.map(st => ({
-                id: st.id,
-                title: st.title,
-                completed: st.completed,
-                position: st.position
-            }));
-            
-            t.totalSubtasks = t.subtasks.length;
-            t.completedSubtasks = t.subtasks.filter(s => s.completed).length;
+            // Специфику меняем только у активных (или текущей)
+            const isTargetActive = !t.completed;
+            const isCurrentEdit = t.id === editingTaskId;
+
+            if (isTargetActive || isCurrentEdit) {
+                if (isTargetActive) {
+                    t.duration_min = activeOnlyPayload.duration;
+                    t.priority = activeOnlyPayload.priority;
+                }
+
+                const mySubtasks = allFinalSubtasks ? allFinalSubtasks.filter(st => st.task_id === t.id) : [];
+                t.subtasks = mySubtasks.map(st => ({
+                    id: st.id,
+                    title: st.title,
+                    completed: st.completed,
+                    position: st.position
+                }));
+                t.totalSubtasks = t.subtasks.length;
+                t.completedSubtasks = t.subtasks.filter(s => s.completed).length;
+            }
           }
         });
 
         refreshOpenContextAfterTaskChange(); 
-        showTaskNotification('🔄 Серия обновлена', `Синхронизировано задач: ${groupTasks.length}`);
+        // ВЕРНУЛИ КОРОТКОЕ УВЕДОМЛЕНИЕ С КОЛИЧЕСТВОМ
+        showTaskNotification('🔄 Серия обновлена', `Обновлено задач: ${groupTasks.length}`);
       }
-
     } 
     // ===========================================
     // ЛОГИКА СОЗДАНИЯ (INSERT) - (Без изменений)
@@ -5275,4 +5296,60 @@ function renderRealYearChartFromServer(dailyStats, year) {
     barWrapper.appendChild(label);
     container.appendChild(barWrapper);
   });
+}
+
+
+// --- Вставьте это в конец файла tasks.js ---
+
+// Функция пересчета сводки дня (кол-во задач + время) для списка выполненных
+function updateDayHeaderSummary(taskId) {
+  // 1. Находим DOM-элемент задачи
+  const taskEl = document.querySelector(`.task-item[data-task-id="${taskId}"]`);
+  if (!taskEl) return;
+
+  // 2. Находим контейнер группы дня (.day-group)
+  const dayGroup = taskEl.closest('.day-group');
+  if (!dayGroup) return;
+
+  // 3. Собираем все задачи внутри этого дня
+  const taskItems = dayGroup.querySelectorAll('.task-item');
+  let totalMinutes = 0;
+  let count = 0;
+
+  taskItems.forEach(item => {
+    const id = parseInt(item.dataset.taskId, 10);
+    // Берем актуальные данные из памяти (tasksDB), так как там уже обновленная длительность
+    const taskData = tasksDB.find(t => t.id === id);
+    
+    if (taskData) {
+      count++;
+      if (taskData.duration_min) {
+        totalMinutes += parseInt(taskData.duration_min, 10);
+      }
+    }
+  });
+
+  // 4. Формируем новый текст (копируем логику из renderCompletedTimeline)
+  const durationLabel = totalMinutes > 0 ? ` • ${formatDurationLabel(totalMinutes)}` : '';
+  
+  // Логика склонения (задача/задачи/задач)
+  let suffix = 'задач';
+  const n = Math.abs(count) % 100; 
+  const n1 = n % 10;
+  if (n > 10 && n < 20) { suffix = 'задач'; }
+  else if (n1 > 1 && n1 < 5) { suffix = 'задачи'; }
+  else if (n1 === 1) { suffix = 'задача'; }
+
+  const summaryLabel = `${count} ${suffix}${durationLabel}`;
+
+  // 5. Обновляем DOM
+  const summaryEl = dayGroup.querySelector('.day-summary');
+  if (summaryEl) {
+    summaryEl.textContent = summaryLabel;
+    
+    // Небольшой визуальный эффект обновления (мигание цветом)
+    summaryEl.style.transition = 'color 0.3s';
+    summaryEl.style.color = '#4ecdc4';
+    setTimeout(() => { summaryEl.style.color = ''; }, 600);
+  }
 }
