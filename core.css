@@ -1,0 +1,1007 @@
+/* --- СТИЛИ ИЗ ВАШЕГО КОДА (БЕЗ ИЗМЕНЕНИЙ) --- */
+*{margin:0;padding:0;box-sizing:border-box}
+
+html {
+  /* Принудительный черный фон для подложки, чтобы не просвечивал Telegram */
+  background-color: #0f1419 !important; 
+  -webkit-tap-highlight-color: transparent; /* Убирает серую вспышку при клике */
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  /* Дублируем фон для надежности */
+  background-color: #0f1419 !important; 
+  background: #0f1419 !important;
+  
+  height: 100vh;
+  width: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+  color-scheme: dark;
+  
+  /* 🔥 КРИТИЧНО ДЛЯ IOS: Делает шрифты и иконки четче и тоньше, 
+     что повышает визуальный контраст на темном фоне */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  
+  /* Исправляет рендеринг текста */
+  text-rendering: optimizeLegibility;
+  
+  /* Шрифты */
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+.phone-container {
+  width: 100%;
+  height: 100%; /* Занимаем всю высоту body */
+  background: #0f1419;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* 🔥 Тоже запрещаем выход за пределы */
+  position: relative;
+}
+.app-header {
+  background: linear-gradient(180deg,#1e2936 0%,#0f1419 100%);
+  padding: 20px;
+  border-bottom: 1px solid rgba(255,255,255,.05);
+  
+  /* ДОБАВИТЬ ЭТО: */
+  flex-shrink: 0; /* Запрещаем сжиматься */
+  z-index: 10; /* Чтобы тень падала на контент при прокрутке */
+}
+
+.profile-bar{display:flex;align-items:center;justify-content:space-between}
+.profile-info{display:flex;align-items:center;gap:14px}
+
+.avatar-wrapper{position:relative}
+.avatar{
+  width:56px;height:56px;border-radius:50%;
+  background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);
+  border:3px solid rgba(102,126,234,.3);
+  display:flex;align-items:center;justify-content:center;font-size:28px;transition:transform .3s ease;cursor:pointer;
+  background-size:cover;background-position:center;overflow:hidden
+}
+.avatar:hover{transform:scale(1.05)}
+
+.avatar.has-image{
+  background-color:#0f1419;
+  border-color:rgba(78,205,196,.35);
+  color:transparent;
+}
+
+.username{color:#fff;font-size:22px;font-weight:800;letter-spacing:.2px}
+
+.stats-button{
+  width:48px;height:48px;background:rgba(102,126,234,.15);
+  border:2px solid rgba(102,126,234,.3);border-radius:12px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:24px;cursor:pointer;transition:.3s
+}
+.stats-button:hover{background:rgba(102,126,234,.25);transform:scale(1.05)}
+.app-content {
+  flex: 1; /* Занимает все свободное место */
+  overflow-y: auto; /* Скролл только если контент не влезает */
+  overflow-x: hidden;
+  
+  /* 🔥 Уменьшаем отступ снизу. Было 96px, ставим 80px или даже меньше, 
+     если контента мало, но достаточно, чтобы прокрутить из-под кнопки + */
+  padding: 20px 20px 80px; 
+  
+  width: 100%;
+  
+  /* Убираем скроллбар для эстетики (опционально) */
+  scrollbar-width: none; 
+}
+.app-content::-webkit-scrollbar {
+  display: none;
+}
+
+.category-card {
+  background: linear-gradient(135deg, rgba(255,255,255,.05) 0%, rgba(255,255,255,.02) 100%);
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 16px;
+  
+  /* ИЗМЕНЕНО: Отступы (сверху 12, справа 6, снизу 12, слева 12) */
+  padding: 12px 6px 12px 12px; 
+  
+  margin-bottom: 12px;
+  cursor: pointer;
+  transition: .3s;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  animation: slideIn .4s ease forwards;
+}
+.category-card:hover{background:linear-gradient(135deg,rgba(255,255,255,.08) 0%,rgba(255,255,255,.04) 100%);transform:translateX(5px)}
+.category-card.overdue{border-color:rgba(255,107,107,.3);background:linear-gradient(135deg,rgba(255,107,107,.1) 0%,rgba(255,107,107,.05) 100%)}
+
+.category-avatar{width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,#667eea,#764ba2);display:flex;align-items:center;justify-content:center;font-size:26px}
+.category-info{flex:1}
+.category-title{color:#ffd700;font-size:14px;font-weight:800;margin-bottom:8px;letter-spacing:.5px;text-transform:uppercase}
+.category-subtitle{color:rgba(255,255,255,.5);font-size:11px}
+.category-count {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  
+  /* ИЗМЕНЕНО: Строгая ширина вместо min-width */
+  width: 74px; 
+  
+  flex-shrink: 0;
+  text-align: center;
+  
+  /* Дополнительно: гарантируем, что отступ справа нулевой */
+  margin-right: 0; 
+}
+.count-number {
+  min-width: 40px; /* Минимальная ширина (для цифр 1-99) */
+  width: auto;     /* Разрешаем растягиваться для 1000+ */
+  height: 40px;
+  padding: 0 6px;  /* Внутренние отступы, чтобы текст не прилипал к краям */
+  background: rgba(102,126,234,.2);
+  border: 2px solid rgba(102,126,234,.4);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 800;
+  font-size: 13px; /* Чуть уменьшим шрифт для надежности */
+}
+.count-total{color:rgba(255,255,255,.4);font-size:10px}
+
+.fab-button{
+  position:fixed;bottom:40px;right:calc(50% - 175px);z-index:5000;
+  width:68px;height:68px;border:none;border-radius:50%;
+  background:linear-gradient(135deg,#4ecdc4 0%,#44a08d 100%);
+  color:#fff;font-size:32px;cursor:pointer;transition:.3s;
+  box-shadow:0 12px 35px rgba(78,205,196,.5),
+              0 0 0 4px rgba(78,205,196,.2);
+  display:flex;align-items:center;justify-content:center
+}
+/* служебный класс для программного скрытия FAB */
+.fab-hidden{display:none !important;}
+.fab-button:hover{
+  transform:scale(1.15) rotate(90deg);
+  box-shadow:0 16px 45px rgba(78,205,196,.7),
+              0 0 0 6px rgba(78,205,196,.3);
+}
+
+body.goal-detail-open .fab-button {
+  display: none !important;
+}
+
+/* --- ПРОФИЛЬ: МАКЕТ НОВОГО ЭКРАНА --- */
+:root {
+  --profile-bg-dark: #0f1419;
+  --profile-card-bg: linear-gradient(135deg, rgba(255,255,255,.05) 0%, rgba(255,255,255,.02) 100%);
+  --profile-border: 1px solid rgba(255,255,255,.1);
+  --profile-text-main: #ffffff;
+  --profile-text-muted: rgba(255,255,255,0.5);
+  --profile-text-sub: #4ecdc4;
+  --profile-accent-teal: #4ecdc4;
+  --profile-accent-purple: #667eea;
+  --profile-accent-gold: #ffd700;
+  --cat-modal-bg: #151a21;
+  --cat-card-bg: linear-gradient(135deg, rgba(255,255,255,.06) 0%, rgba(255,255,255,.03) 100%);
+  --cat-border: 1px solid rgba(255,255,255,.08);
+  --cat-accent: #4ecdc4;
+  --cat-accent-red: #ff6b6b;
+  --cat-text-muted: rgba(255,255,255,0.5);
+  --goal-surface: #0d1117;
+  --goal-surface-dark: #161b22;
+  --goal-card-bg: rgba(255,255,255,0.04);
+  --goal-card-border: rgba(255,255,255,0.08);
+  --goal-primary: #4ecdc4;
+  --goal-primary-strong: #3aa390;
+  --goal-danger: #ff6b6b;
+  --goal-muted: rgba(255,255,255,0.6);
+}
+
+.profile-page {
+  position: absolute;
+  inset: 0;
+  background-color: var(--profile-bg-dark, #0f1419); /* Добавлен запасной цвет */
+  color: var(--profile-text-main);
+  
+  /* 🔥 ГЛАВНОЕ ИСПРАВЛЕНИЕ: принудительно скрываем */
+  display: none !important; 
+  
+  flex-direction: column;
+  padding: 20px;
+  overflow-y: auto;
+  z-index: 25;
+  gap: 18px;
+}
+
+.profile-page.active {
+  /* 🔥 ГЛАВНОЕ ИСПРАВЛЕНИЕ: принудительно показываем при классе active */
+  display: flex !important;
+}
+
+.profile-page-top {
+  display: flex;
+  align-items: center;
+  justify-content: center; /* Центрируем содержимое по горизонтали */
+  position: relative;
+  width: 100%;
+  min-height: 44px;
+  padding-top: 10px; /* Небольшой отступ сверху для мобильных */
+  padding-bottom: 10px;
+  flex-shrink: 0; /* Чтобы шапка не сжималась */
+}
+.profile-back-button {
+  width:44px;
+  height:44px;
+  border-radius:12px;
+  border:1.5px solid rgba(255,255,255,.12);
+  background:rgba(255,255,255,0.05);
+  color:#fff;
+  font-size:18px;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  transition:transform .2s ease, background .2s ease;
+}
+
+.profile-back-button:active {
+  transform:scale(.95);
+  background:rgba(255,255,255,0.08);
+}
+
+profile-page-top-title {
+  font-weight: 800;
+  font-size: 18px;
+  letter-spacing: 0.3px;
+  
+  /* --- ИСПРАВЛЕНИЕ --- */
+  /* Убираем absolute, делаем элемент блочным в потоке flex */
+  position: static; 
+  width: auto;
+  text-align: center;
+  margin: 0 auto; /* Дополнительная гарантия центрирования */
+  color: #fff;
+}
+
+.profile-page-content {
+  display:flex;
+  flex-direction:column;
+  gap:16px;
+}
+
+.profile-header {
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  text-align:center;
+  gap:6px;
+  margin-top:4px;
+}
+
+.profile-avatar-container {
+  position:relative;
+  width:120px;
+  height:120px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  margin-bottom:8px;
+}
+
+.profile-progress-ring {
+  position:absolute;
+  inset:0;
+  transform:rotate(-90deg);
+  overflow:visible;
+}
+
+.profile-ring-bg {
+  fill:none;
+  stroke: rgba(255,255,255,0.1);
+  stroke-width:6;
+}
+
+.profile-ring-fill {
+  fill:none;
+  stroke: url(#profileGradientRing);
+  stroke-width:6;
+  stroke-linecap:round;
+  stroke-dasharray:339;
+  stroke-dashoffset:339;
+  transition: stroke-dashoffset 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+  filter: drop-shadow(0 0 6px var(--profile-accent-teal));
+}
+
+.profile-avatar-img {
+  width:94px;
+  height:94px;
+  border-radius:50%;
+  background: var(--profile-bg-dark);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:48px;
+  z-index:1;
+  box-shadow:0 0 20px rgba(0,0,0,0.5);
+}
+
+.profile-avatar-img.has-image {
+  background-size:cover;
+  background-position:center;
+  color:transparent;
+}
+
+.profile-edit-btn {
+  position:absolute;
+  top:0;
+  right:0;
+  width:32px;
+  height:32px;
+  background: var(--profile-accent-teal);
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:14px;
+  color:#000;
+  z-index:5;
+  border:3px solid var(--profile-bg-dark);
+  box-shadow:0 4px 10px rgba(0,0,0,0.5);
+  cursor:pointer;
+  transition:transform .2s ease;
+}
+
+.profile-edit-btn:active {
+  transform:scale(.9);
+}
+
+.profile-level-badge {
+  position:absolute;
+  bottom:-6px;
+  background: var(--profile-accent-gold);
+  color:#000;
+  font-size:12px;
+  font-weight:800;
+  padding:4px 12px;
+  border-radius:12px;
+  z-index:2;
+  box-shadow:0 4px 10px rgba(0,0,0,0.5);
+}
+
+.profile-user-name {
+  font-size:24px;
+  font-weight:800;
+  letter-spacing:0.5px;
+}
+
+.profile-user-title {
+  font-size:15px;
+  color: var(--profile-text-sub);
+  font-weight:600;
+}
+
+.profile-user-xp {
+  font-size:13px;
+  color: var(--profile-text-muted);
+  font-weight:500;
+}
+
+.profile-section-header {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:8px;
+  padding:0 2px;
+}
+
+.profile-section-title {
+  font-size:13px;
+  font-weight:800;
+  color: var(--profile-text-muted);
+  text-transform:uppercase;
+  letter-spacing:1px;
+}
+
+.profile-section-counter {
+  font-size:13px;
+  font-weight:800;
+  color: var(--profile-accent-teal);
+}
+
+.profile-inventory-scroll {
+  display:flex;
+  gap:10px;
+  overflow-x:auto;
+  padding-bottom:10px;
+  margin:0 -10px 8px -10px;
+  padding-left:10px;
+  padding-right:10px;
+  scrollbar-width:none;
+}
+
+.profile-inventory-scroll::-webkit-scrollbar { display:none; }
+
+.profile-achievement-card {
+  min-width:90px;
+  height:100px;
+  background: var(--profile-card-bg);
+  border: var(--profile-border);
+  border-radius:18px;
+  padding:12px 8px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  position:relative;
+  transition:transform .2s ease;
+}
+
+.profile-achievement-card:active {
+  transform:scale(.96);
+}
+
+.profile-ach-icon { font-size:28px; margin-bottom:8px; filter: drop-shadow(0 0 8px rgba(255,255,255,0.15)); }
+.profile-ach-title { font-size:11px; font-weight:700; color:#fff; line-height:1.2; margin-bottom:4px; }
+.profile-ach-desc { font-size:10px; color: var(--profile-text-muted); }
+
+.profile-locked { opacity:0.5; background: rgba(255,255,255,0.02); border-style:dashed; }
+.profile-locked .profile-ach-icon { filter: grayscale(100%); opacity:0.5; }
+
+.profile-menu-group {
+  background: var(--profile-card-bg);
+  border: var(--profile-border);
+  border-radius:20px;
+  overflow:hidden;
+  margin-bottom:10px;
+  backdrop-filter:blur(10px);
+}
+
+.profile-menu-item {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:16px;
+  border-bottom:1px solid rgba(255,255,255,0.05);
+  cursor:default;
+}
+
+.profile-menu-item:last-child { border-bottom:none; }
+
+.profile-menu-left { display:flex; align-items:center; gap:14px; }
+
+.profile-menu-icon-box {
+  width:36px;
+  height:36px;
+  border-radius:10px;
+  background: rgba(255,255,255,0.05);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:18px;
+  flex-shrink:0;
+}
+
+.profile-menu-text-col { display:flex; flex-direction:column; gap:3px; }
+.profile-menu-title-text { font-size:15px; font-weight:600; color:#fff; }
+.profile-menu-subtitle-text { font-size:12px; color: var(--profile-text-muted); }
+.profile-active-subtitle { color: var(--profile-text-muted); opacity:0.7; }
+
+.profile-menu-right { display:flex; align-items:center; }
+.profile-menu-arrow { font-size:18px; color: rgba(255,255,255,0.2); }
+.profile-menu-value-text { font-size:13px; color: var(--profile-text-sub); margin-right:8px; font-weight:600; }
+
+.profile-category-dots { display:flex; gap:-4px; }
+.profile-cat-dot {
+  width:10px;
+  height:10px;
+  border-radius:50%;
+  border:2px solid var(--profile-bg-dark);
+  box-shadow:0 2px 4px rgba(0,0,0,0.3);
+  margin-left:-4px;
+}
+.profile-cat-dot:first-child { margin-left:0; }
+
+.profile-toggle-switch {
+  width:44px;
+  height:24px;
+  background: rgba(255,255,255,0.1);
+  border-radius:12px;
+  position:relative;
+}
+
+.profile-toggle-switch::after {
+  content:'';
+  position:absolute;
+  top:2px;
+  left:2px;
+  width:20px;
+  height:20px;
+  background:#fff;
+  border-radius:50%;
+  transition:0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow:0 2px 4px rgba(0,0,0,0.2);
+}
+
+.profile-toggle-switch.active { background: var(--profile-accent-teal); }
+.profile-toggle-switch.active::after { transform:translateX(20px); }
+
+.profile-app-version {
+  text-align:center;
+  margin:12px 0 8px;
+  font-size:11px;
+  color: rgba(255,255,255,0.2);
+  font-weight:500;
+}
+
+/* --- МОДАЛКА КАТЕГОРИЙ В ПРОФИЛЕ --- */
+.cat-modal-overlay {
+  position:absolute;
+  inset:0;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(5px);
+  z-index: 1500;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  display: flex;
+  align-items: flex-end;
+}
+
+.cat-modal-overlay.active { opacity: 1; pointer-events: all; }
+
+.cat-modal {
+  width: 100%;
+  height: 85%;
+  background: linear-gradient(180deg, #1a2332 0%, #0d1117 100%);
+  border-top-left-radius: 28px;
+  border-top-right-radius: 28px;
+  border-top: 1px solid rgba(255,255,255,0.1);
+  box-shadow: 0 -10px 40px rgba(0,0,0,0.6);
+  transform: translateY(100%);
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  display: flex;
+  flex-direction: column;
+  will-change: transform;
+}
+
+.cat-modal-overlay.active .cat-modal { transform: translateY(0); }
+.is-dragging { transition: none !important; }
+
+.modal-handle-bar {
+  width: 100%;
+  padding: 12px 0 8px;
+  display: flex;
+  justify-content: center;
+  cursor: grab;
+  flex-shrink: 0;
+}
+
+.modal-handle {
+  width: 40px;
+  height: 5px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.2);
+}
+
+.cat-modal-header {
+  padding: 10px 24px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.cat-modal-title { font-size: 22px; font-weight: 800; letter-spacing: 0.3px; color: #fff; }
+
+.cat-modal-close {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.05);
+  border: none;
+  color: var(--cat-text-muted);
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.cat-modal-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 80px;
+}
+
+.cat-modal-content::-webkit-scrollbar { display: none; }
+
+.cat-list { 
+  display: flex; 
+  flex-direction: column; 
+  gap: 12px; 
+  margin-bottom: 30px; 
+}
+
+.cat-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  /* Темный фон с легким градиентом */
+  background: linear-gradient(135deg, rgba(255,255,255,.06) 0%, rgba(255,255,255,.03) 100%);
+  border: 1px solid rgba(255,255,255,0.08);
+  padding: 12px 16px;
+  border-radius: 16px;
+  transition: transform 0.1s, background 0.2s;
+  /* Для анимации появления */
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.cat-item:active { 
+  transform: scale(0.98); 
+  background: rgba(255,255,255,0.08); 
+}
+
+
+@keyframes slideInUp { 
+  from { opacity: 0; transform: translateY(20px); } 
+  to { opacity: 1; transform: translateY(0); } 
+}
+.cat-item.new-item { 
+  animation: slideInUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; 
+}
+
+.cat-item-left { 
+  display: flex; 
+  align-items: center; 
+  gap: 14px; 
+}
+
+/* Иконка в списке */
+.cat-item-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  /* Стили цвета задаются инлайново через JS */
+  backdrop-filter: blur(4px);
+}
+
+.cat-item-name { 
+  font-size: 16px; 
+  font-weight: 600; 
+  color: #fff; 
+  letter-spacing: 0.3px;
+}
+
+.cat-item-delete {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  color: rgba(255,255,255,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: transparent;
+}
+
+.cat-item-delete:hover { 
+  color: #ff6b6b; 
+  background: rgba(255,107,107,0.15); 
+  transform: scale(1.1);
+}
+
+.cat-item-delete:active {
+  transform: scale(0.95);
+}
+
+.cat-item-delete.disabled {
+  opacity: 0.2;
+  cursor: not-allowed;
+  pointer-events: none;
+  filter: grayscale(100%);
+}
+.new-cat-section {
+  background: rgba(0,0,0,0.2);
+  border-radius: 20px;
+  padding: 20px;
+  border: 1px dashed rgba(255,255,255,0.15);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+}
+
+.section-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--cat-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 16px;
+}
+
+.preview-area {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 24px;
+  height: 50px;
+  align-items: center;
+}
+.preview-chip {
+  padding: 10px 24px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  /* transition для плавного изменения цвета */
+  transition: background 0.3s ease, box-shadow 0.3s ease; 
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.input-group { margin-bottom: 20px; }
+
+.custom-input {
+  width: 100%;
+  padding: 16px;
+  border-radius: 14px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: #fff;
+  font-size: 16px;
+  outline: none;
+  transition: border 0.3s, background 0.3s;
+}
+
+.custom-input::placeholder { color: rgba(255,255,255,0.6); }
+
+.custom-input:focus { border-color: var(--cat-accent); background: rgba(78,205,196,0.05); }
+
+.custom-input.error { 
+  border-color: #ff6b6b !important; 
+  animation: shake 0.4s ease-in-out;
+  background: rgba(255,107,107,0.1);
+}
+
+@keyframes shake { 
+  0%, 100% { transform: translateX(0); } 
+  25% { transform: translateX(-6px); } 
+  75% { transform: translateX(6px); } 
+}
+
+.icon-selector, .color-selector {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 5px 5px 15px;
+  scrollbar-width: none;
+}
+
+.icon-selector::-webkit-scrollbar, .color-selector::-webkit-scrollbar { display: none; }
+
+.icon-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: 0.2s;
+}
+
+.icon-btn.active {
+  background: var(--cat-accent);
+  border-color: var(--cat-accent);
+  color: #000;
+  box-shadow: 0 4px 12px rgba(78,205,196,0.3);
+  transform: scale(1.05);
+}
+
+.color-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  border: 2px solid transparent;
+  cursor: pointer;
+  position: relative;
+  transition: transform 0.2s;
+}
+
+.color-btn.active { border-color: #fff; transform: scale(1.15); }
+
+.color-btn.active::after {
+  content: '✓';
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+}
+
+.add-btn {
+  width: 100%;
+  padding: 16px;
+  border-radius: 14px;
+  border: none;
+  background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 8px 25px rgba(78,205,196,0.25);
+  transition: transform 0.1s;
+}
+
+.add-btn:active { transform: scale(0.96); }
+
+.toast-container {
+  position: absolute;
+  top: 30px; /* Отступ сверху вместо снизу */
+  bottom: auto; /* Сбрасываем нижнее позиционирование */
+  left: 50%;
+  
+  /* Начальное состояние: смещено вверх за пределы экрана */
+  transform: translateX(-50%) translateY(-150%); 
+  
+  background: linear-gradient(135deg, rgba(30,41,54,0.95) 0%, rgba(15,20,25,0.98) 100%);
+  border: 1px solid rgba(78,205,196,0.3);
+  color: #fff;
+  padding: 12px 16px 12px 20px;
+  border-radius: 20px; /* Чуть больше скругление для верхнего баннера */
+  box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  z-index: 10000; /* Максимальный Z-index, чтобы быть поверх модалок */
+  min-width: 300px;
+  max-width: 90%;
+  backdrop-filter: blur(12px);
+}
+
+.toast-container.visible {
+  /* Конечное состояние: выезжает на свое место */
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+  visibility: visible;
+  pointer-events: all;
+  box-shadow: 0 15px 50px rgba(0,0,0,0.7);
+}
+
+/* Текст сообщения */
+#toastMessage {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+/* Кнопка отмены */
+.toast-undo {
+  color: #0d1117;
+  background: #4ecdc4;
+  font-weight: 700;
+  cursor: pointer;
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.8px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 4px 12px rgba(78,205,196,0.3);
+}
+
+.toast-undo:active {
+  transform: scale(0.95);
+}
+
+.toast-undo:hover {
+  background: #5ce6de;
+  box-shadow: 0 6px 16px rgba(78,205,196,0.5);
+}
+
+
+/* --- HIDE CUSTOM BACK BUTTONS FOR TELEGRAM NATIVE FEEL --- */
+
+/* 1. Скрываем все кнопки "Назад" и "Закрыть" */
+.profile-back-button,       /* Профиль */
+.back-button,               /* Списки и Статистика */
+.close-btn,                 /* Модалки создания (Задачи/Цели) */
+.goal-detail-close,         /* Детали цели */
+.filters-panel-close,       /* Панель фильтров */
+.task-modal-close,          /* Нижняя шторка фильтров */
+.cat-modal-close,           /* Категории */
+.create-choice-close,       /* Выбор создания */
+.duration-close,            /* Выбор времени */
+.subtask-popup-close {      /* Попап подзадач (если есть) */
+    display: none !important;
+}
+
+/* 2. Корректировка отступов в заголовках (чтобы текст не прилипал) */
+
+/* Заголовки списков и статистики */
+.list-modal-header,
+.stats-header {
+    gap: 0 !important; /* Убираем отступ от скрытой кнопки */
+}
+
+/* Заголовок профиля */
+.profile-page-top {
+    gap: 0 !important;
+}
+
+/* Заголовок модалок создания (Задача/Цель) */
+/* Раньше было space-between, теперь заголовок должен быть слева или по центру */
+.flow-row {
+    justify-content: flex-start !important; /* Или center, если хочешь по центру */
+}
+
+/* Заголовок шторки фильтров (внизу) */
+.filter-modal-title {
+    /* Если нужно убрать отступы, хотя там text-align: center */
+    margin: 0;
+}
+
+/* Заголовок деталей цели */
+/* Убираем отступы, так как кнопка была absolute */
+.goal-detail-header {
+    padding-top: 20px !important; /* Чуть больше воздуха сверху */
+}
+
+/* Усиление контраста для iPhone/Mobile */
+@media (hover: none) and (pointer: coarse) {
+  /* Делаем карточки чуть светлее, чтобы они выделялись на глубоком черном */
+  .category-card, 
+  .task-card, 
+  .goal-milestone-card,
+  .kpi-card,
+  .weekday-stats,
+  .chart-container,
+  .heatmap-container {
+    /* Добавляем легкую белую подложку под градиент */
+    background-color: rgba(255, 255, 255, 0.03) !important;
+    /* Усиливаем границы, так как на Retina тонкие линии теряются */
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    /* Убираем лишнюю тень, которая может "грязнить" фон */
+    box-shadow: none !important; 
+  }
+
+  /* Делаем текст заголовков чуть ярче */
+  .category-title, 
+  .kpi-value, 
+  .task-title, 
+  .card-title {
+    text-shadow: 0 0 1px rgba(0,0,0,0.5); /* Легкая обводка для четкости */
+  }
+  
+  /* Усиливаем цвета иконок */
+  .category-avatar, 
+  .choice-icon-box, 
+  .avatar {
+    filter: saturate(1.2); /* На 20% насыщеннее цвета */
+  }
+}

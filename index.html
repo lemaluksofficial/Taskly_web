@@ -1,0 +1,1283 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Task Manager</title>
+  <meta name="color-scheme" content="dark">
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <link rel="stylesheet" href="core.css">
+  <link rel="stylesheet" href="tasks.css">
+  <link rel="stylesheet" href="goals.css">
+  
+</head>
+<body>
+  <div class="phone-container">
+    <div class="app-header" id="appHeader">
+      <div class="profile-bar">
+        <div class="profile-info">
+          <div class="avatar-wrapper">
+            <div class="avatar" onclick="toggleProfileMenu(event)">🌸</div>
+            <input type="file" id="avatarFileInput" accept="image/*" aria-label="Выбор аватара" hidden>
+          </div>
+          <div><div class="username">Мой список</div></div>
+        </div>
+        <div class="stats-button" onclick="openStats()">📊</div>
+      </div>
+    </div>
+
+    <div class="profile-page" id="profilePage" aria-hidden="true">
+      <div class="profile-page-top">
+        <button class="profile-back-button" onclick="closeProfilePage()" aria-label="Закрыть профиль">←</button>
+        <div class="profile-page-top-title">Профиль</div>
+      </div>
+
+      <div class="profile-page-content">
+        <div class="profile-header">
+          <div class="profile-avatar-container">
+            <svg class="profile-progress-ring" viewBox="0 0 120 120">
+              <defs>
+                <linearGradient id="profileGradientRing" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" style="stop-color:#4ecdc4; stop-opacity:1" />
+                  <stop offset="100%" style="stop-color:#667eea; stop-opacity:1" />
+                </linearGradient>
+              </defs>
+              <circle class="profile-ring-bg" cx="60" cy="60" r="54" />
+              <circle class="profile-ring-fill" id="profileLevelRing" cx="60" cy="60" r="54" />
+            </svg>
+            <div class="profile-avatar-img">🌸</div>
+            <div class="profile-edit-btn" onclick="openAvatarPicker()" aria-label="Сменить аватар">✏️</div>
+            <div class="profile-level-badge">LVL 5</div>
+          </div>
+          <div class="profile-user-name">Мой список</div>
+          <div class="profile-user-title">Мастер продуктивности</div>
+          <div class="profile-user-xp">1240 / 2000 XP до уровня 6</div>
+        </div>
+
+        <div class="profile-section-header">
+          <span class="profile-section-title">Достижения</span> <span class="profile-section-counter">3 / 12</span>
+        </div>
+
+        <div class="profile-inventory-scroll">
+          <div class="profile-achievement-card">
+            <div class="profile-ach-icon">🔥</div>
+            <div class="profile-ach-title">В ударе</div>
+            <div class="profile-ach-desc">7 дней</div>
+          </div>
+          <div class="profile-achievement-card">
+            <div class="profile-ach-icon">✅</div> 
+            <div class="profile-ach-title">Финишер</div>
+            <div class="profile-ach-desc">100 задач</div>
+          </div>
+          <div class="profile-achievement-card">
+            <div class="profile-ach-icon">🎯</div>
+            <div class="profile-ach-title">Снайпер</div>
+            <div class="profile-ach-desc">Все цели</div>
+          </div>
+          <div class="profile-achievement-card profile-locked">
+            <div class="profile-ach-icon">🧘‍♀️</div>
+            <div class="profile-ach-title">Дзен</div>
+            <div class="profile-ach-desc">???</div>
+          </div>
+          <div class="profile-achievement-card profile-locked">
+            <div class="profile-ach-icon">⚡</div>
+            <div class="profile-ach-title">Спидран</div>
+            <div class="profile-ach-desc">???</div>
+          </div>
+        </div>
+
+        <div class="profile-section-header">
+          <span class="profile-section-title">Контент</span>
+        </div>
+        <div class="profile-menu-group">
+          <div class="profile-menu-item" onclick="openCategoryModal()">
+            <div class="profile-menu-left">
+              <div class="profile-menu-icon-box" style="color:#ffa726; background:rgba(255,167,38,0.15);">📂</div>
+              <div class="profile-menu-text-col">
+                <span class="profile-menu-title-text">Категории</span>
+                <span class="profile-menu-subtitle-text">Управление папками</span>
+              </div>
+            </div>
+            <div class="profile-menu-right">
+              <div class="profile-category-dots" id="profilePreviewDots" style="margin-right: 10px;"></div>
+              <span class="profile-menu-arrow">›</span>
+            </div>
+          </div>
+
+          <div class="profile-menu-item">
+            <div class="profile-menu-left">
+              <div class="profile-menu-icon-box" style="color:#4facfe; background:rgba(79,172,254,0.15);">📋</div>
+              <div class="profile-menu-text-col">
+                <span class="profile-menu-title-text">Шаблоны</span>
+                <span class="profile-menu-subtitle-text">Утро, Спорт, Чтение</span>
+              </div>
+            </div>
+            <div class="profile-menu-right">
+              <span class="profile-menu-arrow">›</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="profile-section-header">
+          <span class="profile-section-title">Данные</span>
+        </div>
+        <div class="profile-menu-group">
+          <div class="profile-menu-item">
+            <div class="profile-menu-left">
+              <div class="profile-menu-icon-box" style="color:#4ecdc4; background:rgba(78,205,196,0.15);">☁️</div>
+              <div class="profile-menu-text-col">
+                <span class="profile-menu-title-text">Экспорт данных</span>
+                <span class="profile-menu-subtitle-text">Полный архив аккаунта</span>
+              </div>
+            </div>
+            <div class="profile-menu-right">
+              <span class="profile-menu-arrow">↓</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="profile-section-header">
+          <span class="profile-section-title">Настройки</span>
+        </div>
+        <div class="profile-menu-group">
+          <div class="profile-menu-item">
+            <div class="profile-menu-left">
+              <div class="profile-menu-icon-box" style="color:#ffd700; background:rgba(255,215,0,0.15);">🎨</div>
+              <div class="profile-menu-text-col">
+                <span class="profile-menu-title-text">Интерфейс</span>
+                <span class="profile-menu-subtitle-text profile-active-subtitle">Neon Dark (Active)</span>
+              </div>
+            </div>
+            <div class="profile-menu-right">
+              <span class="profile-menu-arrow">›</span>
+            </div>
+          </div>
+
+          <div class="profile-menu-item">
+            <div class="profile-menu-left">
+              <div class="profile-menu-icon-box" style="color:#f093fb; background:rgba(240,147,251,0.15);">🔔</div>
+              <div class="profile-menu-text-col">
+                <span class="profile-menu-title-text">Уведомления</span>
+              </div>
+            </div>
+            <div class="profile-menu-right">
+              <div class="profile-toggle-switch active" onclick="toggleNotifications(event)"></div>
+            </div>
+          </div>
+
+          
+          <div class="profile-menu-item">
+            <div class="profile-menu-left">
+              <div class="profile-menu-icon-box" style="color:#ffffff; background:rgba(255,255,255,0.1);">🌐</div>
+              <div class="profile-menu-text-col">
+                <span class="profile-menu-title-text">Язык</span>
+              </div>
+            </div>
+            <div class="profile-menu-right">
+              <span class="profile-menu-value-text">Русский</span>
+              <span class="profile-menu-arrow">›</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="profile-menu-group">
+          <div class="profile-menu-item">
+            <div class="profile-menu-left">
+              <div class="profile-menu-icon-box" style="color:#ff6b6b; background:rgba(255,107,107,0.15);">💬</div>
+              <span class="profile-menu-title-text">Написать нам</span>
+            </div>
+            <div class="profile-menu-right">
+              <span class="profile-menu-arrow">›</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="profile-app-version">Версия 1.0.4 (Build 250)</div>
+      </div>
+    </div>
+
+    <div class="cat-modal-overlay" id="catModalOverlay">
+      <div class="cat-modal" id="catModal">
+        <div class="modal-handle-bar" id="swipeArea">
+          <div class="modal-handle"></div>
+        </div>
+
+        <div class="cat-modal-header">
+          <div class="cat-modal-title">🗂️ Категории</div>
+          <button class="cat-modal-close" onclick="closeCategoryModal()">✕</button>
+        </div>
+
+        <div class="cat-modal-content">
+          <div class="section-label">Ваш список</div>
+          <div class="cat-list" id="categoriesList"></div>
+
+          <div class="new-cat-section">
+            <div class="section-label">✨ Новая категория</div>
+
+            <div class="preview-area">
+              <div class="preview-chip" id="previewChip">
+                <span id="previewIcon">📂</span>
+                <span id="previewName">Название...</span>
+              </div>
+            </div>
+
+            <div class="input-group">
+              <input type="text" class="custom-input" id="newCatName" placeholder="Название (макс. 15)" maxlength="15" autocomplete="off">
+            </div>
+
+            <div class="input-group">
+              <div class="section-label" style="margin-bottom:8px; font-size:10px;">Иконка</div>
+              <div class="icon-selector" id="iconSelector"></div>
+            </div>
+
+            <div class="input-group">
+              <div class="section-label" style="margin-bottom:8px; font-size:10px;">Цвет</div>
+              <div class="color-selector" id="colorSelector"></div>
+            </div>
+
+            <button class="add-btn" onclick="addCategory()">Создать</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="toast-container" id="toast">
+      <span id="toastMessage">Действие выполнено</span>
+      <span class="toast-undo" id="toastUndo">ОТМЕНА</span>
+    </div>
+
+    <!-- ПОЛНОСТЬЮ ПЕРЕПИСАНОЕ app-content -->
+    <div class="app-content" id="appContent">
+      <!-- Блок ЗАДАЧИ -->
+      <div class="section-title">🗂️ Задачи</div>
+
+      <div class="category-card" onclick="openTasks('active')">
+        <div class="category-avatar">📝</div>
+        <div class="category-info">
+          <div class="category-title">Активные</div>
+          <div class="category-subtitle">Задачи в работе</div>
+        </div>
+        <div class="category-count"><div class="count-number">14</div><div class="count-total">в работе</div></div>
+      </div>
+
+      <div class="category-card" onclick="openTasks('completed')">
+        <div class="category-avatar">✅</div>
+        <div class="category-info">
+          <div class="category-title">Выполненные</div>
+          <div class="category-subtitle">Готовые задачи</div>
+        </div>
+        <div class="category-count"><div class="count-number">12</div><div class="count-total">готово</div></div>
+      </div>
+
+      <!-- Блок ЦЕЛИ -->
+      <div class="section-title" style="margin-top:8px;">🎯 Цели</div>
+
+      <div class="category-card" onclick="openGoals('active')">
+        <div class="category-avatar">🎯</div>
+        <div class="category-info">
+          <div class="category-title">Активные</div>
+          <div class="category-subtitle">Цели в процессе</div>
+        </div>
+        <div class="category-count"><div class="count-number">6</div><div class="count-total">в процессе</div></div>
+      </div>
+
+      <div class="category-card" onclick="openGoals('achieved')">
+        <div class="category-avatar">🏁</div>
+        <div class="category-info">
+          <div class="category-title">Достигнутые</div>
+          <div class="category-subtitle">Завершённые цели</div>
+        </div>
+        <div class="category-count"><div class="count-number">3</div><div class="count-total">готово</div></div>
+      </div>
+    </div>
+    
+    <button class="fab-button" onclick="openCreateChoiceModal()">+</button>
+    
+        <!-- НОВАЯ МОДАЛКА: Фильтр активных задач -->
+    <div class="filter-modal-overlay" id="filterModalOverlay">
+      <div class="filter-modal">
+        <div class="filter-modal-header">
+          <div class="filter-handle"></div>
+          <div class="filter-modal-title">Фильтр задач</div>
+          <button class="task-modal-close" onclick="closeFilterModal()">✕</button>
+        </div>
+        <div class="filter-modal-content">
+          <button class="filter-option" onclick="showTasksList('today')">
+            <span class="filter-icon" style="color: #4ecdc4; background: rgba(78,205,196,0.1); border-color: rgba(78,205,196,0.2);">📅</span>
+            <div class="filter-text">
+              <div class="filter-title">Сегодня</div>
+              <div class="filter-subtitle">Задачи на сегодня</div>
+            </div>
+            <span class="filter-count" id="filterCountToday">3</span>
+            <span class="filter-arrow">›</span>
+          </button>
+          <button class="filter-option" onclick="showTasksList('tomorrow')">
+            <span class="filter-icon" style="color: #ffd700; background: rgba(255,215,0,0.1); border-color: rgba(255,215,0,0.2);">🌅</span>
+            <div class="filter-text">
+              <div class="filter-title">Завтра</div>
+              <div class="filter-subtitle">Задачи на завтра</div>
+            </div>
+            <span class="filter-count" id="filterCountTomorrow">2</span>
+            <span class="filter-arrow">›</span>
+          </button>
+          <button class="filter-option" onclick="showTasksList('week')">
+            <span class="filter-icon" style="color: #667eea; background: rgba(102,126,234,0.1); border-color: rgba(102,126,234,0.2);">📆</span>
+            <div class="filter-text">
+              <div class="filter-title">7 дней</div>
+              <div class="filter-subtitle">Задачи на неделю</div>
+            </div>
+            <span class="filter-count" id="filterCountWeek">7</span>
+            <span class="filter-arrow">›</span>
+          </button>
+          <button class="filter-option" onclick="showTasksList('all')">
+            <span class="filter-icon" style="color: #f093fb; background: rgba(240,147,251,0.1); border-color: rgba(240,147,251,0.2);">📋</span>
+            <div class="filter-text">
+              <div class="filter-title">Все</div>
+              <div class="filter-subtitle">Все активные задачи</div>
+            </div>
+            <span class="filter-count" id="filterCountAll">14</span>
+            <span class="filter-arrow">›</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="action-sheet-overlay" id="seriesActionSheetOverlay">
+      <div class="action-sheet">
+        <div class="modal-handle"></div> 
+        
+        <div class="action-sheet-header">
+          <div class="action-sheet-title">Изменение серии</div>
+          <div class="action-sheet-subtitle">Эта задача связана с другими датами</div>
+        </div>
+        
+        <div class="action-sheet-content">
+          <button class="choice-card" data-action="single">
+            <div class="choice-icon-box" style="background: rgba(78,205,196,0.1); color: #4ecdc4;">
+              📝
+            </div>
+            <div class="choice-info">
+              <div class="choice-title">Только эту задачу</div>
+              <div class="choice-subtitle">Изменения коснутся только текущей даты</div>
+            </div>
+            <span class="choice-arrow">›</span>
+          </button>
+          
+          <button class="choice-card" data-action="series">
+            <div class="choice-icon-box" style="background: rgba(102,126,234,0.1); color: #667eea;">
+              ♾️
+            </div>
+            <div class="choice-info">
+              <div class="choice-title">Всю серию</div>
+              <div class="choice-subtitle">Изменить общие параметры для всех дат</div>
+            </div>
+            <span class="choice-arrow">›</span>
+          </button>
+          
+          </div>
+      </div>
+    </div>
+    
+    <!-- НОВАЯ МОДАЛКА: Список задач/целей -->
+    <div class="list-modal-overlay" id="listModalOverlay">
+      <div class="list-modal">
+        <div class="list-modal-header">
+          <button class="back-button" onclick="closeListModal()">←</button>
+          <div class="list-modal-title" id="listModalTitle">Список</div>
+
+          <!-- Новый контейнер с кнопками справа -->
+          <div class="list-modal-header-actions">
+            <!-- Кнопка поиска (по умолчанию скрыта, показываем только для задач) -->
+            <button class="list-search-toggle-button" id="searchToggleButton" onclick="toggleListSearch()" style="display: none;">
+              🔍️
+            </button>
+
+            <!-- Кнопка фильтров (как и была) -->
+            <button class="filter-toggle-button" id="filterToggleButton" onclick="toggleFilterPanel()" style="display: none;">
+              <span class="filter-icon">⚙️️</span>
+            </button>
+
+            <!-- Кнопка создания цели (показывается только в списке целей) -->
+            <button
+              class="goal-list-action"
+              id="goalCreateButton"
+              onclick="openGoalModal()"
+              title="Создать цель"
+              style="display: none;"
+            >
+              +
+            </button>
+          </div>
+        </div>
+    
+        <!-- НОВОЕ: строка поиска под хедером -->
+        <div class="list-search-wrapper" id="listSearchWrapper" style="display: none;">
+          <div class="list-search-input-container">
+            <span class="list-search-icon">🔍</span>
+            <input
+              type="text"
+              id="listSearchInput"
+              class="list-search-input"
+              placeholder="Введите название задачи для поиска..."
+              oninput="handleListSearchInput(this.value)"
+              autocomplete="off"
+              spellcheck="false"
+            />
+          </div>
+          <button class="list-search-clear" onclick="clearListSearch()" title="Очистить поиск">✕</button>
+        </div>
+    
+        <div class="list-modal-content" id="listModalContent">
+          <!-- Динамический контент -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Оверлей для затемнения фона при открытой панели фильтров -->
+    <div class="filters-overlay" id="filtersOverlay" onclick="toggleFilterPanel()"></div>
+
+    <!-- Боковая панель фильтров -->
+    <div class="filters-panel" id="filtersPanel">
+      <div class="filters-panel-header">
+        <div class="filters-panel-title">⚙️ Фильтры</div>
+        <div class="filters-panel-close" onclick="toggleFilterPanel()">✕</div>
+      </div>
+      
+      <div class="filters-panel-content">
+        <div class="filter-section">
+          <div class="filter-section-title">🔥 Приоритет</div>
+          <div class="filter-chips">
+            <button class="filter-chip priority-extreme" data-priority="extreme" onclick="togglePriorityFilter('extreme')">🚨 Экстремальный</button>
+            <button class="filter-chip priority-high" data-priority="high" onclick="togglePriorityFilter('high')">🔴 Высокий</button>
+            <button class="filter-chip priority-medium" data-priority="medium" onclick="togglePriorityFilter('medium')">🟡 Средний</button>
+            <button class="filter-chip priority-low" data-priority="low" onclick="togglePriorityFilter('low')">🟢 Низкий</button>
+          </div>
+        </div>
+    
+        <div class="filter-section">
+          <div class="filter-section-title">📂 Категория</div>
+          <div class="filter-chips" id="filterCategoryChips"></div>
+        </div>
+        
+        <div class="filter-section">
+          <div class="filter-section-title">🔄 Сортировка</div>
+          <div class="filter-chips" id="sortFilterChips">
+            <button class="filter-chip" data-sort="date" onclick="toggleSortFilter('date')">📅 По дате</button>
+            <button class="filter-chip" data-sort="priority" onclick="toggleSortFilter('priority')">🔥 По приоритету</button>
+            <button class="filter-chip" data-sort="alphabet" onclick="toggleSortFilter('alphabet')">🔤 По алфавиту</button>
+          </div>
+        </div>
+
+        
+        <button class="filter-reset" onclick="resetFilters()">
+          <span>✕</span>
+          <span>Сбросить фильтры</span>
+        </button>
+      </div>
+    </div>
+    
+    <!-- НОВАЯ МОДАЛКА: Выбор создания задачи или цели -->
+    <div class="create-choice-overlay" id="createChoiceOverlay" onclick="closeCreateChoiceModal(event)">
+      <div class="create-choice-modal">
+        
+        <div class="modal-handle"></div>
+
+        <div class="create-choice-header">
+          <div class="create-choice-title">Создать новое</div>
+          <button class="create-choice-close" onclick="closeCreateChoiceModal()">✕</button>
+        </div>
+
+        <div class="create-choice-content">
+          
+          <button class="choice-card task-type" onclick="chooseCreateTask()">
+            <div class="choice-icon-box">📝</div>
+            <div class="choice-info">
+              <div class="choice-title">
+                Задача
+                <span class="badge-mini">Быстро</span>
+              </div>
+              <div class="choice-subtitle">Разовое дело с дедлайном, длительностью и напоминанием.</div>
+            </div>
+            <span class="choice-arrow">›</span>
+          </button>
+
+          <button class="choice-card goal-type" onclick="chooseCreateGoal()">
+            <div class="choice-icon-box">🎯</div>
+            <div class="choice-info">
+              <div class="choice-title">
+                Цель
+                <span class="badge-mini">Проект</span>
+              </div>
+              <div class="choice-subtitle">Большая цель с этапами (подцелями), прогрессом и трекингом.</div>
+            </div>
+            <span class="choice-arrow">›</span>
+          </button>
+
+        </div>
+      </div>
+    </div>
+    
+    <!-- НОВАЯ МОДАЛКА: Создание цели -->
+    <div class="goal-modal-overlay" id="goalModalOverlay">
+      <div class="goal-modal flow-design" role="dialog" aria-labelledby="goalModalTitle" aria-modal="true">
+
+        <div class="modal-header">
+          <div class="flow-indicator"></div>
+          <div class="flow-row">
+            <span class="flow-title" id="goalModalTitle">СОЗДАНИЕ ЦЕЛИ</span>
+            <button class="close-btn" onclick="closeGoalModal()" aria-label="Закрыть">✕</button>
+          </div>
+        </div>
+
+        <div class="scroll-content" id="goalModalScrollContent">
+          <div class="flow-categories-scroll" id="goalCategoryChips"></div>
+
+          <div class="flow-section">
+            <div class="flow-hero-card">
+              <div class="flow-hero-header">
+                <div class="flow-icon-preview" id="goalIconPreview">⭐</div>
+                <div class="flow-title-wrapper">
+                  <span class="flow-label">Я ХОЧУ...</span>
+                  <textarea id="goalTitleInput" class="flow-title-input" placeholder="Например: Выучить испанский" rows="1"></textarea>
+                  <div class="validation-error" id="goalTitleError">Введите название цели</div>
+                </div>
+              </div>
+              <div class="flow-divider"></div>
+              <div class="flow-options-row">
+                <label class="flow-date-chip">
+                  <span class="flow-date-icon" id="dateBtnIcon">📅</span>
+                  <span id="dateBtnText">Срок</span>
+                  <input type="text" id="goalDeadlineInput" readonly placeholder="Выберите срок">
+                </label>
+                <input type="text" id="goalDescriptionInput" class="flow-desc-chip" placeholder="Заметка или мотивация...">
+              </div>
+            </div>
+          </div>
+
+          <div class="flow-section">
+            <div class="section-header">
+              <span>ЭТАПЫ (ПОДЦЕЛИ)</span>
+              <span class="flow-section-counter" id="subgoalCounter">0 этапов</span>
+            </div>
+
+            <div class="flow-timeline">
+              <div class="empty-timeline-msg" id="subgoalsEmpty">Разбейте цель на шаги...</div>
+              <div id="subgoalsList"></div>
+            </div>
+
+            <button class="flow-add-btn" id="addSubgoalButton">
+              <span>+</span> Добавить этап
+            </button>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <div class="flow-summary-text" id="goalSummary">Начните вводить название</div>
+          <button class="btn-main" id="saveGoalButton" onclick="saveGoal()" disabled>Создать <span>✨</span></button>
+        </div>
+
+        <div id="subgoalsAccordionContent" class="active" style="display:none;"></div>
+        <button id="subgoalsAccordionToggle" style="display:none;">🎯 Добавить подцели (опционально)</button>
+      </div>
+    </div>
+    
+    <!-- МОДАЛКА ДЕТАЛЕЙ ЦЕЛИ -->
+    <div class="goal-detail-overlay" id="goalDetailOverlay">
+      <div class="goal-detail-modal">
+
+        <div class="goal-detail-header">
+          <div class="goal-detail-drag"></div>
+          <button class="goal-detail-close" onclick="closeGoalDetail()">✕</button>
+
+          <div class="goal-detail-title-bar">
+            <div class="goal-detail-icon">🎯</div>
+            <div class="goal-detail-title-text">
+              <div class="goal-detail-badge" id="goalCategoryBadge">⭐ Другое</div>
+              <div class="goal-detail-title" id="goalDetailTitle">Изучить веб-разработку</div>
+              <div class="goal-detail-subtitle" id="goalCreatedDateContainer">
+              </div>
+            </div>
+          </div>
+
+          <div class="goal-detail-stats-row">
+            <div class="goal-stat-box">
+              <div class="goal-stat-value" id="goalDeadlineStat">31 дек.</div>
+              <div class="goal-stat-label">Дедлайн</div>
+            </div>
+            <div class="goal-stat-box">
+              <div class="goal-stat-value" id="goalDaysLeftStat" data-state="active">14</div>
+              <div class="goal-stat-label">Дней ост.</div>
+            </div>
+            <div class="goal-stat-box">
+              <div class="goal-stat-value" id="goalSubgoalCountStat">2/5</div>
+              <div class="goal-stat-label">Этапов</div>
+            </div>
+          </div>
+
+          <div class="goal-progress-area">
+            <div class="goal-progress-labels">
+              <span>Прогресс</span>
+              <span class="goal-progress-percent-text" id="goalProgressPercent">40%</span>
+            </div>
+            <div class="goal-progress-track">
+              <div class="goal-progress-fill" id="goalProgressFill" style="width: 0"></div>
+            </div>
+            <div class="goal-progress-meta" id="goalProgressValue">2 из 5 подцелей выполнено</div>
+          </div>
+
+          <div class="goal-progress-status in-progress" id="goalStatus">
+            <span>⏳</span>
+            <span>В процессе</span>
+          </div>
+        </div>
+
+        <div class="goal-detail-content">
+
+          <div class="goal-info-section goal-description-section" id="goalDescriptionSection">
+            <div class="goal-section-title">📝 Описание</div>
+            <div class="goal-description-text" id="goalDescriptionText">
+              Освоить основы HTML, CSS и JavaScript. Создать портфолио из 3-х проектов.
+            </div>
+          </div>
+
+          <div class="goal-info-section goal-subgoals-section" id="goalSubgoalsSection">
+            <div class="section-header goal-section-title goal-checklist-header">
+              <span>Чек-лист</span>
+              <span id="goalSubgoalsCounter">2 из 5</span>
+            </div>
+            <div class="goal-subgoals-list goal-timeline" id="goalSubgoalsList"></div>
+          </div>
+
+        </div>
+
+        <div class="goal-detail-actions">
+          <button class="goal-action-btn delete" onclick="alert('Удалить цель')">
+            <span>🗑</span>
+          </button>
+          <button class="goal-action-btn edit" onclick="alert('Редактировать цель')">
+            <span>✎</span>
+            <span>Изменить</span>
+          </button>
+          <button class="goal-action-btn complete" onclick="alert('Отметить как достигнутую')">
+            <span>✓</span>
+            <span>Завершить</span>
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Модалка задачи (обновленный вид) -->
+    <div class="task-modal-overlay" id="taskModalOverlay">
+      <div class="task-modal flow-design" role="dialog" aria-labelledby="taskModalTitle" aria-modal="true">
+
+        <div class="modal-header">
+          <div class="flow-indicator"></div>
+          <div class="flow-row">
+            <span class="flow-title" id="taskModalTitle">НОВАЯ ЗАДАЧА</span>
+            <button class="close-btn" onclick="closeTaskModal()" aria-label="Закрыть">✕</button>
+          </div>
+        </div>
+
+        <div class="scroll-content" id="taskModalScrollContent">
+          <div class="flow-categories-scroll" id="categoryChips"></div>
+
+          <div class="flow-section">
+            <div class="flow-hero-card">
+              <div class="flow-hero-header">
+                <div class="flow-icon-preview" id="taskIconPreview">📝</div>
+                <div class="flow-title-wrapper">
+                  <span class="flow-label">МНЕ НУЖНО...</span>
+                  <textarea id="taskTitleInput" class="flow-title-input" placeholder="Что нужно сделать? (2–5 слов)" rows="1"></textarea>
+                  <div class="validation-error" id="titleError">Введите название</div>
+                </div>
+              </div>
+              <div class="flow-divider"></div>
+              <div class="flow-options-stack">
+                <div class="flow-option-card">
+                  <div class="flow-option-card-header">
+                    <span>🗓️ Срок</span>
+                    <span class="flow-option-hint">выберите удобную дату</span>
+                  </div>
+                  <div class="chip-group" id="dateChips">
+                    <button class="chip" data-date="today">Сегодня</button>
+                    <button class="chip" data-date="tomorrow">Завтра</button>
+                    <button class="chip chip-outline" data-date="custom" id="customDateChip">Другая</button>
+                  </div>
+                </div>
+
+                <div class="flow-option-card">
+                  <div class="flow-option-card-header">
+                    <span>⏱️ Длительность</span>
+                    <span class="flow-option-hint">оцените время выполнения</span>
+                  </div>
+                  <div class="chip-group" id="durationChips">
+                    <button class="chip" data-duration="5">+5м</button>
+                    <button class="chip" data-duration="15">+15м</button>
+                    <button class="chip" data-duration="30">+30м</button>
+                    <button class="chip" data-duration="60">+1ч</button>
+                    <button class="chip chip-outline" id="durationCustomChip">Выбрать</button>
+                  </div>
+                </div>
+
+                <div class="flow-option-card">
+                  <div class="flow-option-card-header">
+                    <span>🔥 Приоритет</span>
+                    <span class="flow-option-hint">выберите важность</span>
+                  </div>
+                  <div class="chip-group" id="priorityChips">
+                    <button class="chip priority-extreme" data-priority="extreme">🚨 Экстремальный</button>
+                    <button class="chip priority-high" data-priority="high">🔴 Высокий</button>
+                    <button class="chip priority-medium" data-priority="medium">🟡 Средний</button>
+                    <button class="chip priority-low" data-priority="low">🟢 Низкий</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="flow-section">
+            <div class="section-header">
+              <span>ШАГИ (ПОДЗАДАЧИ)</span>
+              <span class="flow-section-counter" id="subtasksCounter">0 шагов</span>
+            </div>
+
+            <div class="flow-timeline">
+              <div class="empty-timeline-msg" id="subtasksEmpty" style="display: block;">Разбейте задачу на шаги...</div>
+              <div id="subtasksList"></div>
+            </div>
+
+            <button class="flow-add-btn" id="addSubtaskButton">
+              <span>+</span> Добавить подзадачу
+            </button>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <div class="flow-summary-text" id="taskSummary">...</div>
+          <button class="btn-main" id="saveTaskButton" onclick="saveTask()">Добавить <span>✨</span></button>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="stats-overlay" id="statsOverlay" onclick="closeStats()"></div>
+    <div class="stats-panel" id="statsPanel">
+      <div class="stats-header">
+        <div class="back-button" onclick="closeStats()">←</div>
+        <div class="stats-title">📊 Статистика</div>
+      </div>
+      <!-- Заменяем весь блок <div class="stats-content"> на: -->
+    <div class="stats-content">
+      <!-- Новый дизайн: сегментированный контрол для выбора типа -->
+      <div class="stats-type-selector">
+        <button class="stats-type-btn active" data-type="tasks">
+          <span class="stats-type-icon">📝</span>
+          <span class="stats-type-label">Задачи</span>
+        </button>
+        <button class="stats-type-btn" data-type="goals">
+          <span class="stats-type-icon">🎯</span>
+          <span class="stats-type-label">Цели</span>
+        </button>
+      </div>
+      
+      <!-- Период выбирается единым контролом для обоих типов -->
+      <div class="stats-period-selector" id="statsPeriodSelector">
+      <button class="stats-period-btn" data-period="week">Неделя</button>
+      <button class="stats-period-btn active" data-period="month">Месяц</button>
+      <button class="stats-period-btn" data-period="year">Год</button>
+      <button class="stats-period-btn" data-period="all">Все</button>
+    </div>
+  
+      <!-- Контент панели задач -->
+      <div class="stats-content-panel active" id="panel-tasks">
+        <!-- Подпанель: Неделя задач -->
+        <div class="stats-period-panel" id="tasks-week" style="display: none;">
+          <div class="stats-section">
+            <div class="section-title">🗓️ Статистика за неделю</div>
+            <div class="week-header">
+              <button class="nav-btn" id="btnPrevWeek" onclick="changeTaskWeek(-1)">‹</button>
+              <div class="week-title" id="statsWeekTitle">Загрузка...</div>
+              <button class="nav-btn" id="btnNextWeek" onclick="changeTaskWeek(1)">›</button>
+            </div>
+            
+            <div class="kpi-grid">
+              <div class="kpi-card">
+                <div class="kpi-title">Выполнено задач</div>
+                <div class="kpi-row">
+                  <div class="kpi-value" id="kpiWeekCount">0</div>
+                  <div class="kpi-delta" id="kpiWeekCountDelta">—</div>
+                </div>
+                <div class="kpi-note">к прошлой неделе</div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-title">Затрачено времени</div>
+                <div class="kpi-row">
+                  <div class="kpi-value" id="kpiWeekDuration">0ч</div>
+                  <div class="kpi-delta" id="kpiWeekDurationDelta">—</div>
+                </div>
+                <div class="kpi-note">к прошлой неделе</div>
+              </div>
+            </div>
+            
+            <div class="kpi-grid" style="grid-template-columns: 1fr; margin-top: 12px;">
+              <div class="kpi-card">
+                <div class="kpi-title">Подзадачи</div>
+                <div class="kpi-row">
+                  <div class="kpi-value" id="kpiWeekSubtasks">0</div>
+                  <div class="kpi-delta" id="kpiWeekSubtasksDelta">—</div>
+                </div>
+                <div class="kpi-note">выполнено подзадач к прошлой неделе</div>
+              </div>
+            </div>
+          </div>
+        
+          <div class="stats-section">
+            <div class="section-title">📅 По дням (Пн–Вс)</div>
+            <div class="weekday-stats" id="weekDayStatsContainer">
+              </div>
+          </div>
+        
+          <div class="stats-section">
+            <div class="section-title">🗂️ По категориям</div>
+            <div class="category-stats-card">
+              <div class="category-stats-header">
+                <span>Детализация</span>
+                <span>% от задач</span>
+              </div>
+              <div class="category-stats-list" id="categoryStatsWeek"></div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Подпанель: Месяц задач -->
+        <div class="stats-period-panel" id="tasks-month" style="display: none;">
+          <div class="stats-section">
+            <div class="section-title">📆 Статистика за месяц</div>
+            <div class="month-header">
+              <button class="nav-btn" onclick="changeTaskMonth(-1)">‹</button>
+              <div class="month-title" id="statsMonthTitle">Загрузка...</div>
+              <button class="nav-btn" onclick="changeTaskMonth(1)">›</button>
+            </div>
+            
+            <div class="kpi-grid">
+              <div class="kpi-card">
+                <div class="kpi-title">Выполнено задач</div>
+                <div class="kpi-row">
+                  <div class="kpi-value" id="kpiMonthCount">0</div>
+                  <div class="kpi-delta" id="kpiMonthCountDelta">—</div>
+                </div>
+                <div class="kpi-note">к прошлому месяцу</div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-title">Затрачено времени</div>
+                <div class="kpi-row">
+                  <div class="kpi-value" id="kpiMonthDuration">0ч</div>
+                  <div class="kpi-delta" id="kpiMonthDurationDelta">—</div>
+                </div>
+                <div class="kpi-note">к прошлому месяцу</div>
+              </div>
+            </div>
+            
+            <div class="kpi-grid" style="grid-template-columns: 1fr; margin-top: 12px;">
+              <div class="kpi-card">
+                <div class="kpi-title">Подзадачи</div>
+                <div class="kpi-row">
+                  <div class="kpi-value" id="kpiMonthSubtasks">0</div>
+                  <div class="kpi-delta" id="kpiMonthSubtasksDelta">—</div>
+                </div>
+                <div class="kpi-note">выполнено подзадач к прошлому месяцу</div>
+              </div>
+            </div>
+          </div>
+        
+          <div class="stats-section">
+            <div class="section-title">🔥 Карта активности</div>
+            <div class="heatmap-container">
+              <div class="heatmap-grid" id="heatmapGridMonth"></div>
+            </div>
+          </div>
+        
+          <div class="stats-section">
+            <div class="section-title">📅 По неделям месяца</div>
+            <div class="weekday-stats" id="monthWeeksChartContainer">
+              </div>
+          </div>
+        
+          <div class="stats-section">
+            <div class="section-title">🗂️ По категориям</div>
+            <div class="category-stats-card">
+              <div class="category-stats-header">
+                <span>Детализация</span>
+                <span>% от задач</span>
+              </div>
+              <div class="category-stats-list" id="categoryStatsMonth"></div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Подпанель: Год задач -->
+        <div class="stats-period-panel" id="tasks-year" style="display: none;">
+          <div class="stats-section">
+            <div class="section-title">📅 Статистика за год</div>
+            <div class="year-header">
+              <button class="nav-btn" onclick="changeTaskYear(-1)">‹</button>
+              <div class="year-title" id="statsYearTitle">Загрузка...</div>
+              <button class="nav-btn" onclick="changeTaskYear(1)">›</button>
+            </div>
+            
+            <div class="kpi-grid">
+              <div class="kpi-card">
+                <div class="kpi-title">Выполнено задач</div>
+                <div class="kpi-row">
+                  <div class="kpi-value" id="kpiYearCount">0</div>
+                  <div class="kpi-delta" id="kpiYearCountDelta">—</div>
+                </div>
+                <div class="kpi-note">к прошлому году</div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-title">Затрачено времени</div>
+                <div class="kpi-row">
+                  <div class="kpi-value" id="kpiYearDuration">0ч</div>
+                  <div class="kpi-delta" id="kpiYearDurationDelta">—</div>
+                </div>
+                <div class="kpi-note">к прошлому году</div>
+              </div>
+            </div>
+            
+            <div class="kpi-grid" style="grid-template-columns: 1fr; margin-top: 12px;">
+              <div class="kpi-card">
+                <div class="kpi-title">Подзадачи</div>
+                <div class="kpi-row">
+                  <div class="kpi-value" id="kpiYearSubtasks">0</div>
+                  <div class="kpi-delta" id="kpiYearSubtasksDelta">—</div>
+                </div>
+                <div class="kpi-note">выполнено подзадач к прошлому году</div>
+              </div>
+            </div>
+          </div>
+        
+          <div class="stats-section">
+            <div class="section-title">🔥 Карта активности за год</div>
+            <div class="heatmap-year-container">
+              <div class="heatmap-year-wrapper" id="heatmapGridYear"></div>
+              
+              <div class="heatmap-year-legend">
+                <span class="heatmap-year-legend-label">Меньше</span>
+                <div class="heatmap-year-legend-item level-0"></div>
+                <div class="heatmap-year-legend-item level-1"></div>
+                <div class="heatmap-year-legend-item level-2"></div>
+                <div class="heatmap-year-legend-item level-3"></div>
+                <div class="heatmap-year-legend-item level-4"></div>
+                <span class="heatmap-year-legend-label">Больше</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="stats-section">
+            <div class="section-title">📊 График по месяцам</div>
+            <div class="chart-container" id="yearChartContainer">
+              </div>
+          </div>
+        
+          <div class="stats-section">
+            <div class="section-title">🗂️ По категориям</div>
+            <div class="category-stats-card">
+              <div class="category-stats-header">
+                <span>Детализация</span>
+                <span>% от задач</span>
+              </div>
+              <div class="category-stats-list" id="categoryStatsYear"></div>
+            </div>
+          </div>
+        </div>
+        <!-- Подпанель: Все задачи -->
+        <div class="stats-period-panel" id="tasks-all" style="display: none;">
+          <div class="stats-section">
+            <div class="section-title">🏁 Итоги за всё время</div>
+            
+            <div class="kpi-grid">
+              <div class="kpi-card">
+                <div class="kpi-title">Всего задач</div>
+                <div class="kpi-row">
+                  <div class="kpi-value" id="totalTasksAllTime">0</div>
+                </div>
+                <div class="kpi-note">с первого дня использования</div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-title">Время всего</div>
+                <div class="kpi-row">
+                  <div class="kpi-value" id="totalTimeAllTime">0ч</div>
+                </div>
+                <div class="kpi-note">накопленная метрика</div>
+              </div>
+            </div>
+            
+            <div class="kpi-grid" style="grid-template-columns: 1fr; margin-top: 12px;">
+              <div class="kpi-card">
+                <div class="kpi-title">Всего подзадач</div>
+                <div class="kpi-row">
+                  <div class="kpi-value" id="totalSubtasksAllTime">0</div>
+                </div>
+                <div class="kpi-note">выполнено подзадач за всё время</div>
+              </div>
+            </div>
+          </div>
+        
+          <div class="stats-section">
+            <div class="section-title">🗂️ По категориям</div>
+            <div class="category-stats-card">
+              <div class="category-stats-header">
+                <span>Детализация</span>
+                <span>% от задач</span>
+              </div>
+              <div class="category-stats-list" id="categoryStatsAll"></div>
+            </div>
+          </div>
+        </div>
+        
+      </div>
+      
+      <!-- Контент панели целей -->
+    <div class="stats-content-panel" id="panel-goals" style="display: none;">
+      
+      <!-- Селектор периода для целей -->
+      <div class="stats-period-selector" id="goalsPeriodSelector">
+        <button class="stats-period-btn active" data-goals-period="month">Месяц</button>
+        <button class="stats-period-btn" data-goals-period="year">Год</button>
+        <button class="stats-period-btn" data-goals-period="all">Все</button>
+      </div>
+    
+      <!-- Подпанель: Месяц целей -->
+      <div class="stats-period-panel" id="goals-month" style="display: none;">
+        <div class="stats-section">
+          <div class="section-title">📆 Цели за месяц</div>
+          <div class="month-header">
+            <button class="nav-btn" onclick="changeGoalMonth(-1)">‹</button>
+            <div class="month-title" id="statsGoalMonthTitle">Загрузка...</div>
+            <button class="nav-btn" onclick="changeGoalMonth(1)">›</button>
+          </div>
+          
+          <div class="kpi-grid">
+            <div class="kpi-card">
+              <div class="kpi-title">В работе (Активные)</div>
+              <div class="kpi-row">
+                <div class="kpi-value" id="kpiGoalMonthActive">0</div>
+                <div class="kpi-delta" id="kpiGoalMonthActiveDelta">—</div>
+              </div>
+              <div class="kpi-note">всего активных в этом месяце</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-title">Достигнуто целей</div>
+              <div class="kpi-row">
+                <div class="kpi-value" id="kpiGoalMonthAchieved">0</div>
+                <div class="kpi-delta" id="kpiGoalMonthAchievedDelta">—</div>
+              </div>
+              <div class="kpi-note">завершено в этом месяце</div>
+            </div>
+          </div>
+          
+          <div class="kpi-grid" style="margin-top: 12px;">
+            <div class="kpi-card">
+              <div class="kpi-title">Всего подцелей</div>
+              <div class="kpi-row">
+                <div class="kpi-value" id="kpiGoalMonthSubTotal">0</div>
+                <div class="kpi-delta" id="kpiGoalMonthSubTotalDelta">—</div>
+              </div>
+              <div class="kpi-note">в целях этого месяца</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-title">Достигнутых подцелей</div>
+              <div class="kpi-row">
+                <div class="kpi-value" id="kpiGoalMonthSubAchieved">0</div>
+                <div class="kpi-delta" id="kpiGoalMonthSubAchievedDelta">—</div>
+              </div>
+              <div class="kpi-note">к прошлому месяцу</div>
+            </div>
+          </div>
+        </div>
+        
+        </div>
+      
+      <!-- Подпанель: Год целей -->
+      <div class="stats-period-panel" id="goals-year" style="display: none;">
+        <div class="stats-section">
+          <div class="section-title">📅 Статистика за год</div>
+          <div class="year-header">
+            <button class="nav-btn" onclick="changeGoalYear(-1)">‹</button>
+            <div class="year-title" id="statsGoalYearTitle">Загрузка...</div>
+            <button class="nav-btn" onclick="changeGoalYear(1)">›</button>
+          </div>
+          
+          <div class="kpi-grid">
+            <div class="kpi-card">
+              <div class="kpi-title">В работе (Активные)</div>
+              <div class="kpi-row">
+                <div class="kpi-value" id="kpiGoalYearActive">0</div>
+                <div class="kpi-delta" id="kpiGoalYearActiveDelta">—</div>
+              </div>
+              <div class="kpi-note">всего активных в этом году</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-title">Достигнуто целей</div>
+              <div class="kpi-row">
+                <div class="kpi-value" id="kpiGoalYearAchieved">0</div>
+                <div class="kpi-delta" id="kpiGoalYearAchievedDelta">—</div>
+              </div>
+              <div class="kpi-note">завершено в этом году</div>
+            </div>
+          </div>
+          
+          <div class="kpi-grid" style="margin-top: 12px;">
+            <div class="kpi-card">
+              <div class="kpi-title">Всего подцелей</div>
+              <div class="kpi-row">
+                <div class="kpi-value" id="kpiGoalYearSubTotal">0</div>
+                <div class="kpi-delta" id="kpiGoalYearSubTotalDelta">—</div>
+              </div>
+              <div class="kpi-note">в целях этого года</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-title">Достигнутых подцелей</div>
+              <div class="kpi-row">
+                <div class="kpi-value" id="kpiGoalYearSubAchieved">0</div>
+                <div class="kpi-delta" id="kpiGoalYearSubAchievedDelta">—</div>
+              </div>
+              <div class="kpi-note">к прошлому году</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="stats-section">
+          <div class="section-title">📊 Достигнутые цели по месяцам</div>
+          <div class="chart-container" id="goalsYearChartContainer">
+            </div>
+        </div>
+        
+        <div class="stats-section">
+          <div class="section-title">📊 Выполненные подцели</div>
+          <div class="chart-container" id="subgoalsYearChartContainer">
+            </div>
+        </div>
+      </div>
+      
+      <!-- Подпанель: Всё время для целей -->
+      <div class="stats-period-panel" id="goals-all" style="display: none;">
+        <div class="stats-section">
+          <div class="section-title">🏁 Статистика за всё время</div>
+          
+          <div class="kpi-grid">
+            <div class="kpi-card">
+              <div class="kpi-title">Всего создано целей</div>
+              <div class="kpi-row">
+                <div class="kpi-value" id="kpiGoalAllTotal">0</div>
+              </div>
+              <div class="kpi-note">с первого дня использования</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-title">Достигнуто целей</div>
+              <div class="kpi-row">
+                <div class="kpi-value" id="kpiGoalAllAchieved">0</div>
+              </div>
+              <div class="kpi-note" id="kpiGoalAllAchievedNote">0% от всех целей</div>
+            </div>
+          </div>
+          
+          <div class="kpi-grid" style="margin-top: 12px;">
+            <div class="kpi-card">
+              <div class="kpi-title">Всего подцелей</div>
+              <div class="kpi-row">
+                <div class="kpi-value" id="kpiGoalAllSubTotal">0</div>
+              </div>
+              <div class="kpi-note">объем работы за всё время</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-title">Выполнено подцелей</div>
+              <div class="kpi-row">
+                <div class="kpi-value" id="kpiGoalAllSubAchieved">0</div>
+              </div>
+              <div class="kpi-note" id="kpiGoalAllSubAchievedNote">0% от всех этапов</div>
+            </div>
+          </div>
+        </div>
+      
+        <div class="stats-section">
+          <div class="section-title">🗂️ Цели по категориям</div>
+          <div class="category-stats-card">
+            <div class="category-stats-header">
+              <span>Детализация</span>
+              <span>% от целей</span>
+            </div>
+            <div class="category-stats-list" id="categoryStatsGoalsAll"></div>
+          </div>
+        </div>
+      </div>
+      
+    </div>
+    </div>
+    </div>
+
+
+      <!-- Кастомный календарь -->
+    <div class="calendar-overlay" id="calendarOverlay">
+      <div class="calendar-dialog">
+        <div class="calendar-header">
+          <button class="calendar-nav" data-direction="prev">‹</button>
+          <div class="calendar-title" id="calendarTitle">Сентябрь 2025</div>
+          <button class="calendar-nav" data-direction="next">›</button>
+        </div>
+        <div class="calendar-weekdays">
+          <span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span>
+        </div>
+        <div class="calendar-grid" id="calendarGrid"></div>
+        <div class="calendar-footer">
+          <button class="calendar-chip" data-action="multi">Выбрать несколько дат</button>
+          <button class="calendar-chip" data-action="clear">Без даты</button>
+          <button class="calendar-chip" data-action="range">Выбрать диапазон</button>
+          <button class="calendar-chip calendar-save" data-action="save">Сохранить</button>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- Выбор длительности -->
+    <div class="duration-overlay" id="durationPickerOverlay">
+      <div class="duration-dialog">
+        <div class="duration-header">
+          <div class="duration-title">⏱️ Выбрать длительность</div>
+          <button class="duration-close" id="durationPickerClose" aria-label="Закрыть">✕</button>
+        </div>
+        <div class="duration-body">
+          <div class="duration-grid">
+            <div class="duration-block">
+              <div class="duration-label">Часы</div>
+              <div class="duration-input-row">
+                <button class="duration-step" data-target="hours" data-step="-1">−</button>
+                <input type="number" id="durationHoursInput" min="0" max="8" step="1" inputmode="numeric">
+                <button class="duration-step" data-target="hours" data-step="1">+</button>
+              </div>
+            </div>
+            <div class="duration-block">
+              <div class="duration-label">Минуты</div>
+              <div class="duration-input-row">
+                <button class="duration-step" data-target="minutes" data-step="-5">−</button>
+                <input type="number" id="durationMinutesInput" min="0" max="55" step="5" inputmode="numeric">
+                <button class="duration-step" data-target="minutes" data-step="5">+</button>
+              </div>
+            </div>
+          </div>
+          <div class="duration-hint">Выберите длительность в часах и минутах — она применится сразу</div>
+        </div>
+      </div>
+    </div>
+
+    </div>
+    
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="db.js"></script>
+  <script src="core.js"></script>
+  <script src="tasks.js"></script>
+  <script src="goals.js"></script>
+</body>
+</html>
