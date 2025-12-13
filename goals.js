@@ -1209,75 +1209,91 @@ updateGoalMonthUI(currentMetrics, prevMetrics);
 
 
 function calculateGoalMetricsForPeriod(startDate, endDate) {
-// 1. Достигнутые цели (завершенные ИМЕННО в выбранном периоде)
-const achievedInPeriod = goalsDB.filter(g => {
-if (g.active) return false;
-if (!g.completedAt) return false;
-const date = new Date(g.completedAt);
-return date >= startDate && date <= endDate;
-});
+  // Safe date parser: returns Date or null
+  const parseDate = (v) => {
+    if (!v) return null;
+    const d = new Date(v);
+    return isNaN(d.getTime()) ? null : d;
+  };
 
-// 2. Активные цели (Находились в работе в любой момент этого периода)
-const activeInPeriod = goalsDB.filter(g => {
-const createdAt = new Date(g.createdAt);
-// Если создана после конца периода — не считаем
-if (createdAt > endDate) return false;
+  // 1) Достигнутые цели (завершенные ИМЕННО в выбранном периоде)
+  const achievedInPeriod = goalsDB.filter(g => {
+    const completedAt = parseDate(g.completedAt || g.completed_at);
+    if (!completedAt) return false;
 
-// Если у цели есть дата завершения
-if (g.completedAt) {
-  const completedAt = new Date(g.completedAt);
-  // Если завершена ДО начала периода — это уже архив, не активна
-  if (completedAt < startDate) return false;
-  
-  // ИЗМЕНЕНИЕ: Если завершена ВНУТРИ периода или ПОЗЖЕ — она была активна
-  return true; 
-}
+    // Цель должна быть завершенной (на всякий случай страхуемся, если active не синхронизирован)
+    const isCompleted = (g.active === false) || (g.completed === true);
+    if (!isCompleted) return false;
 
-// Если цель еще не завершена (active: true) — она активна
-return true;
-});
+    return completedAt >= startDate && completedAt <= endDate;
+  });
 
-// 3. Сбор всех уникальных целей для подсчета "Всего подцелей" (объем работы)
-const uniqueGoalsMap = new Map();
-[...achievedInPeriod, ...activeInPeriod].forEach(g => uniqueGoalsMap.set(g.id, g));
-const allInvolvedGoals = Array.from(uniqueGoalsMap.values());
+  // 2) Активные цели (были "в работе" в любой момент выбранного периода)
+  // Правильное условие пересечения интервалов:
+  // [createdAt .. completedAt/∞] пересекается с [startDate .. endDate]
+  const activeInPeriod = goalsDB.filter(g => {
+    const completedAt = parseDate(g.completedAt || g.completed_at);
 
-let totalSubgoals = 0;
-let totalAchievedSubgoalsInPeriod = 0;
+    // createdAt обязателен для корректного определения "когда цель существовала".
+    // Если его нет/битый — делаем безопасный фоллбек:
+    // - если цель завершена: считаем что она "появилась" в момент завершения (иначе будем раздувать активность в прошлых годах)
+    // - если цель активна и createdAt неизвестен: НЕ учитываем (иначе появятся фантомные активные цели в старых годах)
+    let createdAt = parseDate(g.createdAt || g.created_at);
+    if (!createdAt) {
+      if (completedAt) createdAt = completedAt;
+      else return false;
+    }
 
-// Считаем общее количество подцелей у вовлеченных задач
-allInvolvedGoals.forEach(g => {
-totalSubgoals += (g.totalSubgoals || 0);
+    // Если создана после конца периода — точно не была активна
+    if (createdAt > endDate) return false;
 
-if (g.subgoals && Array.isArray(g.subgoals)) {
-  g.subgoals.forEach(sub => {
-    // Считаем выполненные подцели
-    if (sub.completed) {
-      let subDate = null;
-      
-      if (sub.completedAt) {
-        subDate = new Date(sub.completedAt);
-      } else if (!g.active && g.completedAt) {
-        // ФОЛЛБЕК: Если у подцели нет даты, берем дату завершения всей цели
-        subDate = new Date(g.completedAt);
-      }
+    // Если завершена до начала периода — уже была архивной
+    if (completedAt && completedAt < startDate) return false;
 
-      if (subDate && subDate >= startDate && subDate <= endDate) {
-        totalAchievedSubgoalsInPeriod++;
-      }
+    // Иначе интервалы пересекаются -> цель была активна в этот период
+    return true;
+  });
+
+  // 3) Сбор всех уникальных целей для подсчета "Всего подцелей" (объем работы)
+  const uniqueGoalsMap = new Map();
+  [...achievedInPeriod, ...activeInPeriod].forEach(g => uniqueGoalsMap.set(g.id, g));
+  const allInvolvedGoals = Array.from(uniqueGoalsMap.values());
+
+  let totalSubgoals = 0;
+  let totalAchievedSubgoalsInPeriod = 0;
+
+  // Считаем общее количество подцелей у вовлеченных целей
+  allInvolvedGoals.forEach(g => {
+    totalSubgoals += (g.totalSubgoals || 0);
+
+    if (g.subgoals && Array.isArray(g.subgoals)) {
+      g.subgoals.forEach(sub => {
+        if (!sub.completed) return;
+
+        let subDate = parseDate(sub.completedAt || sub.completed_at);
+
+        // ФОЛЛБЕК: если у подцели нет даты, но цель завершена — берем дату завершения цели
+        if (!subDate) {
+          const goalCompletedAt = parseDate(g.completedAt || g.completed_at);
+          if (goalCompletedAt && (g.active === false || g.completed === true)) {
+            subDate = goalCompletedAt;
+          }
+        }
+
+        if (subDate && subDate >= startDate && subDate <= endDate) {
+          totalAchievedSubgoalsInPeriod++;
+        }
+      });
     }
   });
-}
-});
 
-return {
-activeCount: activeInPeriod.length,
-achievedCount: achievedInPeriod.length,
-subgoalsTotal: totalSubgoals,
-subgoalsAchieved: totalAchievedSubgoalsInPeriod 
-};
+  return {
+    activeCount: activeInPeriod.length,
+    achievedCount: achievedInPeriod.length,
+    subgoalsTotal: totalSubgoals,
+    subgoalsAchieved: totalAchievedSubgoalsInPeriod
+  };
 }
-
 function updateGoalMonthUI(curr, prev) {
 // Активные
 document.getElementById('kpiGoalMonthActive').textContent = curr.activeCount;
