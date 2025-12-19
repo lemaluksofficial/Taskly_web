@@ -289,7 +289,29 @@
         </div>
         <div class="category-count"><div class="count-number">3</div><div class="count-total">готово</div></div>
       </div>
+      <div class="section-title" style="margin-top:24px;">✨ Желания</div>
+
+      <div class="category-card" onclick="openWishes('active')">
+        <div class="category-avatar" style="background: linear-gradient(135deg, #FF9966, #FF5E62);">🧞</div>
+        <div class="category-info">
+          <div class="category-title">Активные</div>
+          <div class="category-subtitle">Чего я хочу</div>
+        </div>
+        <div class="category-count"><div class="count-number" id="countWishesActive">0</div><div class="count-total">хочу</div></div>
+      </div>
+
+      <div class="category-card" onclick="openWishes('achieved')">
+        <div class="category-avatar" style="background: linear-gradient(135deg, #a8ff78, #78ffd6);">🌟</div>
+        <div class="category-info">
+          <div class="category-title">Исполнено</div>
+          <div class="category-subtitle">Сбывшиеся мечты</div>
+        </div>
+        <div class="category-count"><div class="count-number" id="countWishesAchieved">0</div><div class="count-total">сбылось</div></div>
+      </div>
+
     </div>
+
+   
     
     <button class="fab-button" onclick="openCreateChoiceModal()">+</button>
     
@@ -513,6 +535,18 @@
             <span class="choice-arrow">›</span>
           </button>
 
+          <button class="choice-card wish-type" onclick="openCreateWishModal()">
+            <div class="choice-icon-box" style="background: rgba(255, 153, 102, 0.1); color: #FF9966;">🧞</div>
+            <div class="choice-info">
+              <div class="choice-title">
+                Желание
+                <span class="badge-mini" style="background:rgba(255, 153, 102, 0.2); color:#FF9966;">Dream</span>
+              </div>
+              <div class="choice-subtitle">Мечта или покупка с уровнем желанности.</div>
+            </div>
+            <span class="choice-arrow">›</span>
+          </button>
+
         </div>
       </div>
     </div>
@@ -664,6 +698,51 @@
           </button>
         </div>
 
+      </div>
+    </div>
+
+    <div class="wish-modal-overlay" id="wishModalOverlay">
+      <div class="wish-modal flow-design" role="dialog" aria-modal="true">
+        
+        <div class="modal-header">
+          <div class="flow-indicator"></div>
+          <div class="flow-row">
+            <span class="flow-title">✨ НОВОЕ ЖЕЛАНИЕ</span>
+            <button class="close-btn" onclick="closeCreateWishModal()" aria-label="Закрыть">✕</button>
+          </div>
+        </div>
+    
+        <div class="scroll-content">
+           
+           <div class="flow-section">
+              <div class="flow-hero-card">
+                 <div class="flow-hero-header">
+                    <div class="flow-icon-preview pop" style="background: rgba(255, 153, 102, 0.15); border-color: #FF9966; box-shadow: 0 0 30px rgba(255, 153, 102, 0.3);">🧞</div>
+                    
+                    <div class="flow-title-wrapper">
+                       <span class="flow-label" style="color: #FF9966;">Я МЕЧТАЮ О...</span>
+                       <textarea id="wishTitleInput" class="flow-title-input" placeholder="Например: Полет на воздушном шаре" rows="1"></textarea>
+                    </div>
+                 </div>
+              </div>
+           </div>
+    
+           <div class="flow-section">
+              <div class="section-header">
+                 <span>СИЛА ЖЕЛАНИЯ</span>
+              </div>
+              <div class="chip-group" id="desireListContainer">
+                 </div>
+           </div>
+    
+        </div>
+    
+        <div class="modal-footer">
+           <button class="btn-main" id="saveWishButton" onclick="saveNewWish()" style="box-shadow: 0 8px 30px rgba(255, 153, 102, 0.3);">
+             Загадать <span>✨</span>
+           </button>
+        </div>
+    
       </div>
     </div>
 
@@ -1277,6 +1356,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="db.js"></script>
   <script src="core.js"></script>
+  <script src="wishes.js"></script>
   <script src="tasks.js"></script>
   <script src="goals.js"></script>
 </body>
