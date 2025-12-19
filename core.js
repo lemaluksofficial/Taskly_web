@@ -547,7 +547,7 @@ async function loadUserAvatar() {
 
 
 
-/* --- Обновленная функция undoAction (core.js) --- */
+
 /* --- Обновленная функция undoAction (core.js) --- */
 async function undoAction() {
   // 1. Проверки безопасности
@@ -881,6 +881,36 @@ async function undoAction() {
       }
 
       showToast('Серия задач восстановлена');
+    }
+    // ============================================
+    // 8. Восстановление ЖЕЛАНИЯ (WISH)
+    // ============================================
+    else if (type === 'wish') {
+      // А. Возвращаем в локальный массив по индексу
+      wishesDB.splice(index, 0, item);
+      
+      // Б. Обновляем UI
+      updateWishCounters();
+      // Если открыт список желаний, перерисовываем его
+      if (document.getElementById('listModalOverlay').classList.contains('active')) {
+          // Определяем, какой фильтр сейчас активен в желаниях
+          const filter = typeof currentWishesFilter !== 'undefined' ? currentWishesFilter : 'active';
+          renderWishesList(filter);
+      }
+
+      // В. Восстановление в БД (Supabase)
+      // Вставляем объект целиком, включая оригинальный id и даты
+      const { error } = await supabase.from('wishes').insert([{
+          id: item.id,
+          user_id: CURRENT_USER_ID,
+          title: item.title,
+          desire_level: item.desire_level,
+          created_at: item.created_at || new Date().toISOString(),
+          achieved_at: item.achieved_at // Восстановит статус "Исполнено", если он был
+      }]);
+
+      if (error) throw error;
+      showToast('✨ Желание восстановлено');
     }
 
   } catch (e) {
@@ -1256,7 +1286,7 @@ function renderCategoriesList() {
         weekAgo.setHours(0, 0, 0, 0); // 🔥 ИСПРАВЛЕНИЕ: Сбрасываем часы, чтобы взять всё утро того дня
         const weekAgoISO = weekAgo.toISOString();
     
-        // B. Формируем 4 параллельных запроса
+        // B. Формируем 5 параллельных запроса
         
         // 1. Цели (все, их обычно мало)
         const goalsPromise = supabase
@@ -1283,18 +1313,34 @@ function renderCategoriesList() {
           .select('*', { count: 'exact', head: true }) // head: true не скачивает данные, только count
           .eq('user_id', CURRENT_USER_ID)
           .eq('completed', true);
+
+        // 5. ЖЕЛАНИЯ (НОВОЕ)
+        const wishesPromise = supabase
+        .from('wishes')
+        .select('*')
+        .eq('user_id', CURRENT_USER_ID)
+        .order('created_at', { ascending: false });
+
     
         // Выполняем запросы
-        const [goalsResp, activeTasksArr, recentCompletedResp, totalCountResp] = await Promise.all([
+        const [goalsResp, activeTasksArr, recentCompletedResp, totalCountResp, wishesResp] = await Promise.all([
           goalsPromise,
           activeTasksPromise,
           recentCompletedPromise,
-          totalCountPromise
+          totalCountPromise,
+          wishesPromise
         ]);
+        
     
         if (goalsResp.error) throw goalsResp.error;
         if (recentCompletedResp.error) throw recentCompletedResp.error;
         if (totalCountResp.error) throw totalCountResp.error;
+
+        if (wishesResp.error) console.error('Wish error', wishesResp.error);
+
+        // Сохраняем желания
+        wishesDB = wishesResp.data || [];
+        updateWishCounters(); // <-- Обновляем цифры на карточках желаний
     
         // С. Обработка результатов
         goalsDB = (goalsResp.data || []).map(mapGoalFromDB);
@@ -1385,9 +1431,14 @@ function initModalEventListeners() {
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
       const subtasksPopupOverlay = document.getElementById('subtasksPopupOverlay');
+      const wishModal = document.getElementById('wishModalOverlay');
       if (durationPickerOverlay && durationPickerOverlay.classList.contains('active')) {
         closeDurationPicker();
-      } else if (calendarOverlay && calendarOverlay.classList.contains('active')) {
+      } 
+      else if (wishModal && wishModal.classList.contains('active')) {
+        closeCreateWishModal(); // Закрываем желание
+      }
+      else if (calendarOverlay && calendarOverlay.classList.contains('active')) {
         closeCalendar();
       } else if (subtasksPopupOverlay && subtasksPopupOverlay.classList.contains('active')) {
         closeSubtasksPopup();
@@ -1635,6 +1686,15 @@ function initModalEventListeners() {
       closeCalendar();
     });
   }
+  const wishModalOverlay = document.getElementById('wishModalOverlay');
+  if (wishModalOverlay) {
+    wishModalOverlay.addEventListener('click', (e) => {
+      // Если целью клика является сам оверлей (фон), а не контент внутри
+      if (e.target === wishModalOverlay) {
+        closeCreateWishModal();
+      }
+    });
+  }
 }
 
   // --- Заглушка для уведомлений ---
@@ -1680,8 +1740,9 @@ function initSmartBackButton() {
     { id: 'goalDetailOverlay',     close: closeGoalDetail,        priority: 4500 },
     { id: 'listModalOverlay',      close: closeListModal,         priority: 4000 }, // Списки задач/целей
     { id: 'catModalOverlay',       close: closeCategoryModal,     priority: 1500 },
+    { id: 'wishModalOverlay', close: closeCreateWishModal, priority: 6000 },
     { id: 'statsPanel',            close: closeStats,             priority: 100 },
-    { id: 'profilePage',           close: closeProfilePage,       priority: 50 }
+    { id: 'profilePage',           close: closeProfilePage,       priority: 50 },
   ];
 
   // Функция, которая проверяет, какие окна открыты, и обновляет кнопку
@@ -1782,9 +1843,12 @@ class SwipeToClose {
   }
 
   start(y, e) {
-    // Проверка: активно ли окно (включая cat-modal-overlay)
-    const overlay = this.modal.closest('.filter-modal-overlay, .create-choice-overlay, .task-modal-overlay, .goal-modal-overlay, .goal-detail-overlay, .cat-modal-overlay, .action-sheet-overlay');    
+    // Проверка: активно ли окно (включая cat-modal-overlay и wish-modal-overlay)
+    const overlay = this.modal.closest(
+      '.filter-modal-overlay, .create-choice-overlay, .task-modal-overlay, .goal-modal-overlay, .goal-detail-overlay, .cat-modal-overlay, .action-sheet-overlay, .wish-modal-overlay'
+    );
     if (!overlay || !overlay.classList.contains('active')) return;
+
 
     // ИСПРАВЛЕНИЕ 2: Если тянем за контент, который можно скроллить вверх, не запускаем свайп закрытия
     // (актуально, если ручкой является всё окно)
@@ -1863,6 +1927,9 @@ function initAllModalsSwipe() {
 
   // Б) (Опционально) Привязываем свайп к заголовку, чтобы было удобнее
   new SwipeToClose('#seriesActionSheetOverlay .action-sheet', '.action-sheet-header', closeSeriesActionSheet);
+
+  // 8. Желания (НОВОЕ)
+  new SwipeToClose('#wishModalOverlay .wish-modal', '.modal-header', closeCreateWishModal);
 }
 
 
