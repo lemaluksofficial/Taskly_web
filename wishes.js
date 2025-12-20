@@ -2,10 +2,10 @@
 
 // Глобальные данные
 let wishesDB = [];
-let currentDesireLevel = 2; // По умолчанию "Хочу"
+let currentDesireLevel = 2; 
+let currentDifficultyLevel = 2; // Новое состояние: сложность по умолчанию "Нормально"
 let isWishEditMode = false;
 let editingWishId = null;
-
 
 // Конфигурация уровней
 const DESIRE_LEVELS_CONFIG = [
@@ -16,49 +16,85 @@ const DESIRE_LEVELS_CONFIG = [
   { level: 5, icon: '🛐', text: 'Священная мечта' }
 ];
 
+// Новая конфигурация сложности
+const DIFFICULTY_LEVELS_CONFIG = [
+  { 
+    level: 1, icon: '🟢', text: 'Легко', 
+    color: '#43e97b', // Зеленый (Emerald)
+    glow: 'rgba(67, 233, 123, 0.3)' 
+  },
+  { 
+    level: 2, icon: '🔵', text: 'Нормально', 
+    color: '#4facfe', // Голубой (Sky Blue)
+    glow: 'rgba(79, 172, 254, 0.3)' 
+  },
+  { 
+    level: 3, icon: '🟡', text: 'Сложно', 
+    color: '#feca57', // Желтый (Gold)
+    glow: 'rgba(254, 202, 87, 0.3)' 
+  },
+  { 
+    level: 4, icon: '🟠', text: 'Экстремально', 
+    color: '#ff9f43', // Оранжевый (Sunset)
+    glow: 'rgba(255, 159, 67, 0.4)' 
+  },
+  { 
+    level: 5, icon: '🔴', text: 'Невозможно', 
+    color: '#ff1744', // Красный (Radical Red)
+    glow: 'rgba(255, 23, 68, 0.5)' 
+  }
+];
 // --- Управление Модалкой ---
 
 function openCreateWishModal(wishId = null) {
-    // Закрываем меню выбора "Тип создания"
-    const choiceOverlay = document.getElementById('createChoiceOverlay');
-    if (choiceOverlay) choiceOverlay.classList.remove('active');
+  const choiceOverlay = document.getElementById('createChoiceOverlay');
+  if (choiceOverlay) choiceOverlay.classList.remove('active');
+
+  const modal = document.getElementById('wishModalOverlay');
+  const titleText = document.querySelector('#wishModalOverlay .flow-title');
+  const saveBtn = document.getElementById('saveWishButton');
+
+  if (modal) {
+      modal.classList.add('active');
+      document.body.classList.add('body-modal-open');
+  }
   
-    const modal = document.getElementById('wishModalOverlay');
-    const titleText = document.querySelector('#wishModalOverlay .flow-title');
-    const saveBtn = document.getElementById('saveWishButton');
+  const input = document.getElementById('wishTitleInput');
+  const errorMsg = document.getElementById('wishTitleError');
 
-    if (modal) {
-        modal.classList.add('active');
-        document.body.classList.add('body-modal-open');
-    }
-    
-    const input = document.getElementById('wishTitleInput');
+  if (wishId) {
+      isWishEditMode = true;
+      editingWishId = wishId;
+      const wish = wishesDB.find(w => w.id === wishId);
+      
+      if (input) input.value = wish.title;
+      currentDesireLevel = wish.desire_level || 2;
+      currentDifficultyLevel = wish.difficulty_level || 2; // Загружаем сложность
+      if (titleText) titleText.textContent = '✎ ИЗМЕНИТЬ ЖЕЛАНИЕ';
+      if (saveBtn) saveBtn.innerHTML = 'Сохранить <span>✨</span>';
+  } else {
+      isWishEditMode = false;
+      editingWishId = null;
+      if (input) input.value = '';
+      currentDesireLevel = 2;
+      currentDifficultyLevel = 2; // Сброс сложности
+      if (titleText) titleText.textContent = '✨ НОВОЕ ЖЕЛАНИЕ';
+      if (saveBtn) saveBtn.innerHTML = 'Загадать <span>✨</span>';
+  }
 
-    if (wishId) {
-        // РЕЖИМ РЕДАКТИРОВАНИЯ
-        isWishEditMode = true;
-        editingWishId = wishId;
-        const wish = wishesDB.find(w => w.id === wishId);
-        
-        if (input) input.value = wish.title;
-        currentDesireLevel = wish.desire_level;
-        if (titleText) titleText.textContent = '✎ ИЗМЕНИТЬ ЖЕЛАНИЕ';
-        if (saveBtn) saveBtn.innerHTML = 'Сохранить <span>✨</span>';
-    } else {
-        // РЕЖИМ СОЗДАНИЯ
-        isWishEditMode = false;
-        editingWishId = null;
-        if (input) input.value = '';
-        currentDesireLevel = 2;
-        if (titleText) titleText.textContent = '✨ НОВОЕ ЖЕЛАНИЕ';
-        if (saveBtn) saveBtn.innerHTML = 'Загадать <span>✨</span>';
-    }
-    
-    renderDesireLevelSelector();
-    
-    setTimeout(() => { if(input) input.focus(); }, 300);
+  if (input) input.classList.remove('invalid');
+  if (errorMsg) errorMsg.style.display = 'none';
+  
+  renderDesireLevelSelector();
+  renderDifficultyLevelSelector(); // Рендерим новый селектор
+  
+  setTimeout(() => { 
+      if(input) {
+          input.focus();
+          autoGrowWishTitle(); 
+      }
+  }, 300);
 }
-
 function closeCreateWishModal() {
     const modal = document.getElementById('wishModalOverlay');
     if (modal) {
@@ -95,62 +131,104 @@ function renderDesireLevelSelector() {
     });
 }
 
+
+// Новый рендер селектора сложности
+function renderDifficultyLevelSelector() {
+  const container = document.getElementById('difficultyListContainer');
+  if (!container) return;
+  container.innerHTML = '';
+
+  DIFFICULTY_LEVELS_CONFIG.forEach(item => {
+    const el = document.createElement('div');
+    const isActive = item.level === currentDifficultyLevel;
+    el.className = `chip ${isActive ? 'active' : ''}`;
+    
+    // Динамический стиль для активного чипа
+    if (isActive) {
+        el.style.borderColor = item.color;
+        // Создаем мягкий градиент на основе основного цвета уровня
+        el.style.background = `linear-gradient(135deg, ${item.glow} 0%, rgba(0,0,0,0.2) 100%)`;
+        el.style.color = item.color;
+        el.style.boxShadow = `0 6px 20px ${item.glow}`;
+        
+        // Для уровня "Невозможно" добавим пульсацию (как у экстремальных задач)
+        if (item.level === 5) {
+            el.style.animation = 'pulsePriority 2s ease-in-out infinite';
+        }
+    }
+
+    el.innerHTML = `${item.icon} ${item.text}`;
+    el.onclick = () => {
+      currentDifficultyLevel = item.level;
+      renderDifficultyLevelSelector();
+      if (window.navigator && window.navigator.vibrate) window.navigator.vibrate(5);
+    };
+    container.appendChild(el);
+  });
+}
+
+
+
 // --- Работа с БД (Supabase) ---
 
 async function saveNewWish() {
-    const titleInput = document.getElementById('wishTitleInput');
-    const title = titleInput.value.trim();
-    const saveBtn = document.getElementById('saveWishButton');
-  
-    if (!title) {
-      titleInput.classList.add('invalid');
-      setTimeout(() => titleInput.classList.remove('invalid'), 500);
-      return;
-    }
-  
-    if(saveBtn) {
-        saveBtn.disabled = true;
-        saveBtn.innerHTML = 'Сохранение...';
-    }
-  
-    try {
-      if (isWishEditMode && editingWishId) {
-        // ОБНОВЛЕНИЕ
-        const { data, error } = await supabase
-          .from('wishes')
-          .update({ title: title, desire_level: currentDesireLevel })
-          .eq('id', editingWishId)
-          .select();
-          
-        if (error) throw error;
+  const titleInput = document.getElementById('wishTitleInput');
+  const errorMsg = document.getElementById('wishTitleError');
+  const title = titleInput.value.trim();
+  const saveBtn = document.getElementById('saveWishButton');
+
+  if (title.length < 2) {
+    titleInput.classList.add('invalid');
+    if (errorMsg) errorMsg.style.display = 'block';
+    return;
+  }
+
+  if(saveBtn) {
+      saveBtn.disabled = true;
+      saveBtn.innerHTML = 'Сохранение...';
+  }
+
+  try {
+    if (isWishEditMode && editingWishId) {
+      const { data, error } = await supabase
+        .from('wishes')
+        .update({ 
+            title: title, 
+            desire_level: currentDesireLevel,
+            difficulty_level: currentDifficultyLevel // СОХРАНЯЕМ В БД
+        })
+        .eq('id', editingWishId)
+        .select();
         
-        const idx = wishesDB.findIndex(w => w.id === editingWishId);
-        if (idx !== -1) wishesDB[idx] = data[0];
-        showToast('Желание обновлено');
-      } else {
-        // СОЗДАНИЕ
-        const newWish = {
-          user_id: CURRENT_USER_ID,
-          title: title,
-          desire_level: currentDesireLevel,
-          created_at: new Date().toISOString()
-        };
-        const { data, error } = await supabase.from('wishes').insert([newWish]).select();
-        if (error) throw error;
-        wishesDB.unshift(data[0]);
-        showToast('✨ Желание загадано!');
-      }
+      if (error) throw error;
       
-      updateWishCounters();
-      renderWishesList(currentWishesFilter);
-      closeCreateWishModal();
-      
-    } catch (err) {
-      console.error('Ошибка сохранения:', err);
-      alert('Не удалось сохранить. Проверьте интернет.');
-    } finally {
-        if(saveBtn) saveBtn.disabled = false;
+      const idx = wishesDB.findIndex(w => w.id === editingWishId);
+      if (idx !== -1) wishesDB[idx] = data[0];
+      showToast('Желание обновлено');
+    } else {
+      const newWish = {
+        user_id: CURRENT_USER_ID,
+        title: title,
+        desire_level: currentDesireLevel,
+        difficulty_level: currentDifficultyLevel, // СОХРАНЯЕМ В БД
+        created_at: new Date().toISOString()
+      };
+      const { data, error } = await supabase.from('wishes').insert([newWish]).select();
+      if (error) throw error;
+      wishesDB.unshift(data[0]);
+      showToast('✨ Желание загадано!');
     }
+    
+    updateWishCounters();
+    renderWishesList(currentWishesFilter);
+    closeCreateWishModal();
+    
+  } catch (err) {
+    console.error('Ошибка сохранения:', err);
+    alert('Не удалось сохранить. Проверьте интернет.');
+  } finally {
+      if(saveBtn) saveBtn.disabled = false;
+  }
 }
 
 // --- Управление списком желаний ---
@@ -202,14 +280,26 @@ function renderWishesList(filter) {
 }
 
 function createWishCardHTML(wish, index) {
+  // Находим конфигурацию силы желания
   const levelCfg = DESIRE_LEVELS_CONFIG.find(l => l.level === wish.desire_level) || DESIRE_LEVELS_CONFIG[1];
-  const isAchieved = !!wish.achieved_at;
-  const wishColor = '#FF9966';
   
-  // Иконка свайпа (как у задач)
+  // Находим конфигурацию сложности
+  const diffCfg = DIFFICULTY_LEVELS_CONFIG.find(l => l.level === wish.difficulty_level) || DIFFICULTY_LEVELS_CONFIG[1];
+  
+  const isAchieved = !!wish.achieved_at;
+  const wishThemeColor = '#FF9966'; // Основной оранжевый цвет раздела
+  
+  // Иконка для свайпа (меняется в зависимости от статуса)
   const swipeIconPath = isAchieved 
     ? 'M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z' 
     : 'M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z';
+
+  // Динамический стиль индикатора сложности
+  const indicatorStyle = `
+    background: ${diffCfg.color}; 
+    box-shadow: 2px 0 12px ${diffCfg.glow};
+    ${wish.difficulty_level === 5 ? 'animation: pulsePriority 2s ease-in-out infinite;' : ''}
+  `;
 
   return `
     <div class="task-item swipe-wrapper wish-item ${isAchieved ? 'completed' : ''}" 
@@ -230,18 +320,29 @@ function createWishCardHTML(wish, index) {
         </div>
       </div>
 
-      <div class="task-card" style="--color: ${wishColor};">
-        <div class="task-indicator"></div>
+      <div class="task-card">
+        <div class="task-indicator" style="${indicatorStyle}"></div>
+        
         <div class="task-content">
           <div class="task-header-row">
             <div>
-              <div class="task-title">${wish.title}</div>
+              <div class="task-title ${isAchieved ? 'strike' : ''}">${wish.title}</div>
               <div class="task-meta">
-                <span class="badge" style="color: ${wishColor}; border-color: ${wishColor}40; background: ${wishColor}10;">
+                <span class="badge" style="color: ${wishThemeColor}; border-color: ${wishThemeColor}40; background: ${wishThemeColor}10;">
                   ${levelCfg.icon} ${levelCfg.text}
                 </span>
+                
+                <span class="badge" style="color: ${diffCfg.color}; border-color: ${diffCfg.color}40; background: ${diffCfg.color}10;">
+                  ${diffCfg.icon} ${diffCfg.text}
+                </span>
+
                 <span class="badge">📅 ${formatDate(wish.created_at)}</span>
-                ${isAchieved ? `<span class="badge" style="color:#a8ff78">🌟 ${formatDate(wish.achieved_at)}</span>` : ''}
+
+                ${isAchieved ? `
+                  <span class="badge" style="color: #a8ff78; border-color: rgba(168,255,120,0.3); background: rgba(168,255,120,0.05);">
+                    🌟 ${formatDate(wish.achieved_at)}
+                  </span>
+                ` : ''}
               </div>
             </div>
           </div>
@@ -264,6 +365,7 @@ function initSwipeForWishes() {
         if (!wrapper._swipeInstance) wrapper._swipeInstance = new SwipeableWishItem(wrapper);
     });
 }
+
 
 class SwipeableWishItem {
     constructor(wrapper) {
@@ -425,4 +527,15 @@ function updateWishCounters() {
   const elAchieved = document.getElementById('countWishesAchieved');
   if (elActive) elActive.textContent = activeCount;
   if (elAchieved) elAchieved.textContent = achievedCount;
+}
+
+
+
+// Функция автоматического изменения высоты текстового поля (как в задачах)
+function autoGrowWishTitle() {
+  const area = document.getElementById('wishTitleInput');
+  if (!area) return;
+  area.style.height = 'auto';
+  // Устанавливаем высоту равную высоте контента, но не более 160px
+  area.style.height = Math.min(area.scrollHeight, 160) + 'px';
 }
