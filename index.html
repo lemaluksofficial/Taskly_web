@@ -714,18 +714,19 @@
     
         <div class="scroll-content">
            
-           <div class="flow-section">
-              <div class="flow-hero-card">
-                 <div class="flow-hero-header">
-                    <div class="flow-icon-preview pop" style="background: rgba(255, 153, 102, 0.15); border-color: #FF9966; box-shadow: 0 0 30px rgba(255, 153, 102, 0.3);">🧞</div>
-                    
-                    <div class="flow-title-wrapper">
-                       <span class="flow-label" style="color: #FF9966;">Я МЕЧТАЮ О...</span>
-                       <textarea id="wishTitleInput" class="flow-title-input" placeholder="Например: Полет на воздушном шаре" rows="1"></textarea>
-                    </div>
-                 </div>
+          <div class="flow-section">
+            <div class="flow-hero-card">
+              <div class="flow-hero-header">
+                <div class="flow-icon-preview pop" id="wishIconPreview" style="background: rgba(255, 153, 102, 0.15); border-color: #FF9966; box-shadow: 0 0 30px rgba(255, 153, 102, 0.3);">🧞</div>
+                
+                <div class="flow-title-wrapper">
+                  <span class="flow-label" style="color: #FF9966;">Я МЕЧТАЮ О...</span>
+                  <textarea id="wishTitleInput" class="flow-title-input" placeholder="Например: Полет на воздушном шаре" rows="1" oninput="autoGrowWishTitle()"></textarea>
+                  <div class="validation-error" id="wishTitleError" style="display: none;">Введите название желания</div>
+                </div>
               </div>
-           </div>
+            </div>
+          </div>
     
            <div class="flow-section">
               <div class="section-header">
@@ -734,6 +735,13 @@
               <div class="chip-group" id="desireListContainer">
                  </div>
            </div>
+
+           <div class="flow-section" style="margin-top: 15px;">
+            <div class="section-header">
+               <span>СЛОЖНОСТЬ ДОСТИЖЕНИЯ</span>
+            </div>
+            <div class="chip-group" id="difficultyListContainer"></div>
+        </div>
     
         </div>
     
