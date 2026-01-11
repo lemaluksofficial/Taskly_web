@@ -599,7 +599,36 @@ function sortTasks(tasks, sortType) {
   
   return sorted;
 }
+function createListSummaryHTML(tasks) {
+  if (!tasks || tasks.length === 0) return '';
 
+  const count = tasks.length;
+  let totalMinutes = 0;
+  
+  tasks.forEach(t => {
+    if (t.duration_min) totalMinutes += parseInt(t.duration_min, 10);
+  });
+
+  // Логика склонения слова "задача"
+  let suffix = 'задач';
+  const n = Math.abs(count) % 100;
+  const n1 = n % 10;
+  if (n > 10 && n < 20) { suffix = 'задач'; }
+  else if (n1 > 1 && n1 < 5) { suffix = 'задачи'; }
+  else if (n1 === 1) { suffix = 'задача'; }
+
+  const timeLabel = totalMinutes > 0 ? `<span class="list-summary-sep">•</span> <span class="list-summary-time">⏱ ${formatDurationLabel(totalMinutes)}</span>` : '';
+
+  return `
+    <div class="list-summary-bar">
+      <div class="list-summary-content">
+        <span class="list-summary-icon">📊</span>
+        <span>${count} ${suffix}</span>
+        ${timeLabel}
+      </div>
+    </div>
+  `;
+}
 
 // Отрисовка отфильтрованного списка задач
 function renderFilteredTasks(tasks) {
@@ -616,14 +645,21 @@ function renderFilteredTasks(tasks) {
     return;
   }
 
-  // --- НОВАЯ ЛОГИКА: Если это список выполненных, показываем Timeline ---
+  // Если это список выполненных, показываем Timeline (там свои заголовки)
   if (currentTasksFilter === 'completed-7days') {
     renderCompletedTimeline(tasks, listContent);
     return;
   }
 
-  // --- СТАНДАРТНАЯ ЛОГИКА (Для активных задач) ---
-  listContent.innerHTML = tasks.map((task, index) => createTaskCardHTML(task, index)).join('');
+  // --- НОВАЯ ЛОГИКА ДЛЯ АКТИВНЫХ ЗАДАЧ ---
+  // Генерируем сводку (кол-во + время)
+  const summaryHTML = createListSummaryHTML(tasks);
+  
+  // Рендерим сводку + сами карточки
+  const cardsHTML = tasks.map((task, index) => createTaskCardHTML(task, index)).join('');
+  
+  listContent.innerHTML = summaryHTML + cardsHTML;
+  
   initSwipeForTasks();
 }
 
