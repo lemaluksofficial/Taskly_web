@@ -3843,7 +3843,47 @@
   font-weight: 600;
   margin-top: 2px;
 }
+.list-summary-bar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  justify-content: center; /* Центрируем бейдж */
+  padding: 10px 0;
+  pointer-events: none; /* Пропускает клики сквозь пустые области к задачам */
+  margin-bottom: 4px;
+}
 
+.list-summary-content {
+  pointer-events: auto; /* Возвращаем кликабельность самому бейджу */
+  background: rgba(22, 27, 34, 0.85); /* Полупрозрачный темный фон */
+  backdrop-filter: blur(12px); /* Эффект матового стекла */
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(78, 205, 196, 0.3); /* Тонкая рамка фирменного цвета */
+  padding: 6px 14px;
+  border-radius: 20px; /* Скругление "пилюля" */
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+}
+
+.list-summary-icon {
+  color: #4ecdc4;
+}
+
+.list-summary-time {
+  color: #4ecdc4;
+  opacity: 0.9;
+}
+
+.list-summary-sep {
+  margin: 0 8px;
+  color: rgba(255, 255, 255, 0.2);
+}
 /* Корректировка отступа карточек внутри таймлайна */
 .timeline-wrapper .task-item {
   margin-left: 4px;
